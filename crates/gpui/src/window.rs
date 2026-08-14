@@ -17,8 +17,8 @@ use crate::{
     SystemWindowTabController, TabStopMap, TaffyLayoutEngine, Task, TextRenderingMode, TextStyle,
     TextStyleRefinement, ThermalState, TransformationMatrix, Underline, UnderlineStyle,
     WindowAppearance, WindowBackgroundAppearance, WindowBounds, WindowControls, WindowDecorations,
-    WindowOptions, WindowParams, WindowTextSystem, point, prelude::*, profiler, px, rems, size,
-    transparent_black,
+    WindowInsets, WindowOptions, WindowParams, WindowTextSystem, point, prelude::*, profiler, px,
+    rems, size, transparent_black,
 };
 
 use anyhow::{Context as _, Result, anyhow};
@@ -1825,6 +1825,14 @@ impl Window {
                     .log_err();
             }
         }));
+        platform_window.on_insets_changed(Box::new({
+            let mut cx = cx.to_async();
+            move |_| {
+                handle
+                    .update(&mut cx, |_, window, _| window.refresh())
+                    .log_err();
+            }
+        }));
         platform_window.on_moved(Box::new({
             let mut cx = cx.to_async();
             move || {
@@ -2583,6 +2591,21 @@ impl Window {
     /// Returns the bounds of the current window in the global coordinate space, which could span across multiple displays.
     pub fn bounds(&self) -> Bounds<Pixels> {
         self.platform_window.bounds()
+    }
+
+    /// Returns the regions obscured by mobile system UI and the software keyboard.
+    pub fn insets(&self) -> WindowInsets {
+        self.platform_window.insets()
+    }
+
+    /// Requests that the platform dismiss the software keyboard, if one is visible.
+    pub fn hide_soft_keyboard(&self) {
+        self.platform_window.hide_soft_keyboard();
+    }
+
+    /// Requests that the platform show the software keyboard for the active input handler.
+    pub fn show_soft_keyboard(&self) {
+        self.platform_window.show_soft_keyboard();
     }
 
     /// Renders the current frame's scene to a texture and returns the pixel data as an RGBA image.
