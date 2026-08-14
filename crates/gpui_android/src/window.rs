@@ -1,4 +1,4 @@
-use crate::events::ClickState;
+use crate::{events::ClickState, ime::ImeEvent};
 use android_activity::AndroidApp;
 use anyhow::Context as _;
 use gpui::{
@@ -11,6 +11,7 @@ use gpui::{
 };
 use gpui_wgpu::{GpuContext, WgpuRenderer, WgpuSurfaceConfig};
 use std::cell::{Cell, RefCell};
+use std::ops::Range;
 use std::rc::Rc;
 use std::sync::Arc;
 
@@ -337,18 +338,65 @@ impl AndroidWindowInner {
 
     pub(crate) fn show_soft_keyboard(&self) {
         if !self.soft_keyboard_requested.replace(true) {
+            let (text, selection) = self.input_snapshot().unwrap_or_default();
+            if crate::ime::update_java_editor(&self.app, &text, selection, true) {
+                return;
+            }
             self.app.show_soft_input(true);
         }
     }
 
     pub(crate) fn hide_soft_keyboard(&self) {
         if self.soft_keyboard_requested.replace(false) {
-            self.app.hide_soft_input(false);
+            if !crate::ime::hide_java_editor(&self.app) {
+                self.app.hide_soft_input(false);
+            }
         }
     }
 
     pub(crate) fn reset_soft_keyboard_request(&self) {
         self.soft_keyboard_requested.set(false);
+    }
+
+    fn input_snapshot(&self) -> Option<(String, Range<usize>)> {
+        self.with_input_handler(|handler| {
+            let length = handler.text_length_utf16()?;
+            let selection = handler.selected_text_range(false)?.range;
+            let mut actual_range = None;
+            let text = handler.text_for_range(0..length, &mut actual_range)?;
+            Some((text, selection))
+        })
+        .flatten()
+    }
+
+    fn synchronize_soft_keyboard(&self) {
+        if !self.soft_keyboard_requested.get() {
+            return;
+        }
+        if let Some((text, selection)) = self.input_snapshot() {
+            crate::ime::update_java_editor(&self.app, &text, selection, false);
+        }
+    }
+
+    pub(crate) fn apply_pending_ime_events(&self) {
+        let events = crate::ime::take_events();
+        if events.is_empty() {
+            return;
+        }
+        let mut events = Some(events);
+        let applied = self.with_input_handler(|handler| {
+            for event in events.take().expect("IME event queue already consumed") {
+                match event {
+                    ImeEvent::Replace { range, text } => {
+                        handler.replace_text_in_range(Some(range), &text);
+                    }
+                    ImeEvent::SetSelection(range) => handler.set_selected_text_range(range),
+                }
+            }
+        });
+        if applied.is_none() {
+            crate::ime::restore_events(events.expect("unapplied IME events missing"));
+        }
     }
 
     pub(crate) fn request_frame(&self, force_render: bool) {
@@ -631,7 +679,9 @@ impl PlatformWindow for AndroidWindow {
         match change {
             TextInputStateChange::FocusGained => self.show_soft_keyboard(),
             TextInputStateChange::FocusLost => self.hide_soft_keyboard(),
-            TextInputStateChange::SelectionChanged | TextInputStateChange::ContentChanged => {}
+            TextInputStateChange::SelectionChanged | TextInputStateChange::ContentChanged => {
+                self.inner.synchronize_soft_keyboard();
+            }
         }
     }
 

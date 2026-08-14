@@ -8,6 +8,7 @@
 mod dispatcher;
 mod display;
 mod events;
+mod ime;
 mod keyboard;
 mod platform;
 mod window;

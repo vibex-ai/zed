@@ -7969,6 +7969,7 @@ dependencies = [
  "futures 0.3.32",
  "gpui",
  "gpui_wgpu",
+ "jni 0.22.4",
  "libc",
  "log",
  "parking_lot",

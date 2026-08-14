@@ -20,19 +20,20 @@ use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant};
 
-static ANDROID_APP: OnceLock<AndroidApp> = OnceLock::new();
+static ANDROID_APP: OnceLock<Mutex<Option<AndroidApp>>> = OnceLock::new();
 
 /// Stores the `AndroidApp` handed to `android_main` so that
 /// `gpui_platform::current_platform` (which takes no arguments) can reach it.
 /// Must be called before constructing the platform.
 pub fn init(app: AndroidApp) {
-    assert!(
-        ANDROID_APP.set(app).is_ok(),
-        "gpui_android::init must only be called once"
-    );
+    *ANDROID_APP
+        .get_or_init(|| Mutex::new(None))
+        .lock()
+        .expect("Android application handle mutex poisoned") = Some(app);
+    crate::ime::clear_events();
 }
 
 const POLL_TIMEOUT: Duration = Duration::from_millis(8);
@@ -74,7 +75,10 @@ impl AndroidPlatform {
         let app = ANDROID_APP
             .get()
             .expect("gpui_android::init(app) must be called from android_main before building the platform")
-            .clone();
+            .lock()
+            .expect("Android application handle mutex poisoned")
+            .clone()
+            .expect("gpui_android::init(app) must receive an application handle");
 
         let (main_sender, main_receiver) = PriorityQueueReceiver::new();
         let dispatcher = Arc::new(AndroidDispatcher::new(main_sender, app.create_waker()));
@@ -317,6 +321,9 @@ impl Platform for AndroidPlatform {
                     PollEvent::Wake | PollEvent::Timeout => {}
                     PollEvent::Main(main_event) => self.handle_main_event(main_event),
                     _ => {}
+                }
+                if let Some(window) = self.window() {
+                    window.apply_pending_ime_events();
                 }
                 self.drain_main_runnables();
                 self.maybe_request_frame();
