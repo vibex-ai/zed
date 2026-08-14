@@ -289,7 +289,7 @@ impl WgpuContext {
     #[cfg(not(target_family = "wasm"))]
     pub fn instance(display: Box<dyn wgpu::wgt::WgpuHasDisplayHandle>) -> wgpu::Instance {
         wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::VULKAN | wgpu::Backends::GL,
+            backends: native_backends(),
             flags: wgpu::InstanceFlags::default(),
             backend_options: wgpu::BackendOptions::default(),
             memory_budget_thresholds: wgpu::MemoryBudgetThresholds::default(),
@@ -562,6 +562,34 @@ impl WgpuContext {
     /// Returns a clone of the device_lost flag for sharing with renderers.
     pub(crate) fn device_lost_flag(&self) -> Arc<AtomicBool> {
         Arc::clone(&self.device_lost)
+    }
+}
+
+#[cfg(not(target_family = "wasm"))]
+fn native_backends() -> wgpu::Backends {
+    native_backends_for(cfg!(target_os = "ios"))
+}
+
+#[cfg(not(target_family = "wasm"))]
+fn native_backends_for(is_ios: bool) -> wgpu::Backends {
+    if is_ios {
+        wgpu::Backends::METAL
+    } else {
+        wgpu::Backends::VULKAN | wgpu::Backends::GL
+    }
+}
+
+#[cfg(all(test, not(target_family = "wasm")))]
+mod backend_tests {
+    use super::native_backends_for;
+
+    #[test]
+    fn native_backend_selection_uses_metal_only_on_ios() {
+        assert_eq!(native_backends_for(true), wgpu::Backends::METAL);
+        assert!(
+            !native_backends_for(false).contains(wgpu::Backends::METAL),
+            "non-iOS platforms should keep the existing Vulkan/GL selection"
+        );
     }
 }
 
