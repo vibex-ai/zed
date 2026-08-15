@@ -262,6 +262,7 @@ impl AndroidPlatform {
             return;
         }
         if let Some(window) = self.window() {
+            events::tick_scroll_momentum(&window, &mut self.touch_gesture.borrow_mut());
             self.last_frame.set(Instant::now());
             window.request_frame(false);
         }

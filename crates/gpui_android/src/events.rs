@@ -8,7 +8,7 @@ use gpui::{
     MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, PlatformInput, Point, ScrollDelta,
     ScrollWheelEvent, TouchPhase, point, px,
 };
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::time::Instant;
 
 /// Distance (logical px) a touch may travel before it stops being a tap and
@@ -16,6 +16,88 @@ use std::time::Instant;
 const TOUCH_SLOP: f32 = 8.0;
 const DOUBLE_TAP_MILLIS: u128 = 400;
 const DOUBLE_TAP_DISTANCE: f32 = 16.0;
+const VELOCITY_WINDOW_NANOS: i64 = 100_000_000;
+const HOLD_SUPPRESSES_MOMENTUM_NANOS: i64 = 100_000_000;
+const FLING_MINIMUM_SPEED: f32 = 50.0;
+const FLING_MAXIMUM_SPEED: f32 = 8_000.0;
+const MOMENTUM_MINIMUM_SPEED: f32 = 10.0;
+const MOMENTUM_DECAY_PER_MILLISECOND: f32 = 0.998;
+
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct TouchSample {
+    position: Point<Pixels>,
+    event_time_nanos: i64,
+}
+
+#[derive(Default)]
+pub(crate) struct VelocityTracker {
+    samples: VecDeque<TouchSample>,
+}
+
+impl VelocityTracker {
+    fn push(&mut self, sample: TouchSample) {
+        if self
+            .samples
+            .back()
+            .is_some_and(|last| sample.event_time_nanos < last.event_time_nanos)
+        {
+            return;
+        }
+        if self
+            .samples
+            .back()
+            .is_some_and(|last| sample.event_time_nanos == last.event_time_nanos)
+        {
+            self.samples.pop_back();
+        }
+        self.samples.push_back(sample);
+
+        let cutoff = sample
+            .event_time_nanos
+            .saturating_sub(VELOCITY_WINDOW_NANOS);
+        while self.samples.len() > 2
+            && self
+                .samples
+                .front()
+                .is_some_and(|first| first.event_time_nanos < cutoff)
+        {
+            self.samples.pop_front();
+        }
+    }
+
+    fn velocity(&self) -> Option<Point<f32>> {
+        let first = self.samples.front()?;
+        let last = self.samples.back()?;
+        let elapsed_nanos = last.event_time_nanos.saturating_sub(first.event_time_nanos);
+        if elapsed_nanos <= 0 {
+            return None;
+        }
+        let elapsed_seconds = elapsed_nanos as f32 / 1_000_000_000.0;
+        Some(point(
+            f32::from(last.position.x - first.position.x) / elapsed_seconds,
+            f32::from(last.position.y - first.position.y) / elapsed_seconds,
+        ))
+    }
+}
+
+fn fling_velocity(velocity: Point<f32>) -> Option<Point<f32>> {
+    let speed = velocity.x.hypot(velocity.y);
+    if speed < FLING_MINIMUM_SPEED {
+        return None;
+    }
+    let scale = (FLING_MAXIMUM_SPEED / speed).min(1.0);
+    Some(point(velocity.x * scale, velocity.y * scale))
+}
+
+fn momentum_step(velocity: Point<f32>, elapsed_seconds: f32) -> (Point<Pixels>, Point<f32>) {
+    let delta = point(
+        px(velocity.x * elapsed_seconds),
+        px(velocity.y * elapsed_seconds),
+    );
+    let decay = MOMENTUM_DECAY_PER_MILLISECOND.powf(elapsed_seconds * 1_000.0);
+    let next_velocity = point(velocity.x * decay, velocity.y * decay);
+    (delta, next_velocity)
+}
 
 #[derive(Default)]
 pub(crate) struct ClickState {
@@ -54,12 +136,54 @@ pub(crate) enum TouchGesture {
     #[default]
     None,
     Pending {
-        start: Point<Pixels>,
-        last: Point<Pixels>,
+        start: TouchSample,
+        velocity: VelocityTracker,
     },
     Scrolling {
-        last: Point<Pixels>,
+        last: TouchSample,
+        velocity: VelocityTracker,
+        last_moved_at_nanos: i64,
     },
+    Momentum {
+        velocity: Point<f32>,
+        position: Point<Pixels>,
+        last_tick: Instant,
+    },
+}
+
+pub(crate) fn tick_scroll_momentum(window: &AndroidWindowInner, gesture: &mut TouchGesture) {
+    let now = Instant::now();
+    let event = match gesture {
+        TouchGesture::Momentum {
+            velocity,
+            position,
+            last_tick,
+        } => {
+            let elapsed_seconds = now.duration_since(*last_tick).as_secs_f32().min(0.05);
+            *last_tick = now;
+            let (delta, next_velocity) = momentum_step(*velocity, elapsed_seconds);
+            *velocity = next_velocity;
+            if velocity.x.hypot(velocity.y) < MOMENTUM_MINIMUM_SPEED {
+                let position = *position;
+                *gesture = TouchGesture::None;
+                ScrollWheelEvent {
+                    position,
+                    delta: ScrollDelta::Pixels(Point::default()),
+                    modifiers: Modifiers::default(),
+                    touch_phase: TouchPhase::Ended,
+                }
+            } else {
+                ScrollWheelEvent {
+                    position: *position,
+                    delta: ScrollDelta::Pixels(delta),
+                    modifiers: Modifiers::default(),
+                    touch_phase: TouchPhase::Moved,
+                }
+            }
+        }
+        _ => return,
+    };
+    window.dispatch_input(PlatformInput::ScrollWheel(event));
 }
 
 pub(crate) fn handle_input_event(
@@ -75,37 +199,57 @@ pub(crate) fn handle_input_event(
             let pointer_index = motion_event.pointer_index();
             let pointer = motion_event.pointer_at_index(pointer_index);
             let position = point(px(pointer.x() / scale), px(pointer.y() / scale));
+            let sample = TouchSample {
+                position,
+                event_time_nanos: motion_event.event_time(),
+            };
             window.state.borrow_mut().mouse_position = position;
 
             match motion_event.action() {
                 MotionAction::Down => {
+                    let mut velocity = VelocityTracker::default();
+                    velocity.push(sample);
                     *gesture = TouchGesture::Pending {
-                        start: position,
-                        last: position,
+                        start: sample,
+                        velocity,
                     };
                 }
                 MotionAction::Move => match gesture {
-                    TouchGesture::Pending { start, last } => {
-                        let moved = ((f32::from(position.x) - f32::from(start.x)).powi(2)
-                            + (f32::from(position.y) - f32::from(start.y)).powi(2))
+                    TouchGesture::Pending { start, velocity } => {
+                        velocity.push(sample);
+                        let moved = ((f32::from(position.x) - f32::from(start.position.x)).powi(2)
+                            + (f32::from(position.y) - f32::from(start.position.y)).powi(2))
                         .sqrt();
                         if moved > TOUCH_SLOP {
-                            let delta = point(position.x - last.x, position.y - last.y);
-                            let anchor = *start;
-                            *gesture = TouchGesture::Scrolling { last: position };
+                            let delta =
+                                point(position.x - start.position.x, position.y - start.position.y);
+                            let anchor = start.position;
+                            let velocity = std::mem::take(velocity);
+                            *gesture = TouchGesture::Scrolling {
+                                last: sample,
+                                velocity,
+                                last_moved_at_nanos: sample.event_time_nanos,
+                            };
                             window.dispatch_input(PlatformInput::ScrollWheel(ScrollWheelEvent {
                                 position: anchor,
                                 delta: ScrollDelta::Pixels(delta),
                                 modifiers: Modifiers::default(),
                                 touch_phase: TouchPhase::Started,
                             }));
-                        } else {
-                            *last = position;
                         }
                     }
-                    TouchGesture::Scrolling { last } => {
-                        let delta = point(position.x - last.x, position.y - last.y);
-                        *last = position;
+                    TouchGesture::Scrolling {
+                        last,
+                        velocity,
+                        last_moved_at_nanos,
+                    } => {
+                        let delta =
+                            point(position.x - last.position.x, position.y - last.position.y);
+                        velocity.push(sample);
+                        *last = sample;
+                        if delta.x != px(0.0) || delta.y != px(0.0) {
+                            *last_moved_at_nanos = sample.event_time_nanos;
+                        }
                         window.dispatch_input(PlatformInput::ScrollWheel(ScrollWheelEvent {
                             position,
                             delta: ScrollDelta::Pixels(delta),
@@ -113,26 +257,29 @@ pub(crate) fn handle_input_event(
                             touch_phase: TouchPhase::Moved,
                         }));
                     }
-                    TouchGesture::None => {}
+                    TouchGesture::None | TouchGesture::Momentum { .. } => {}
                 },
                 MotionAction::Up => match std::mem::take(gesture) {
                     TouchGesture::Pending { start, .. } => {
-                        let click_count = window.click_state.borrow_mut().register_click(start);
+                        let click_count = window
+                            .click_state
+                            .borrow_mut()
+                            .register_click(start.position);
                         window.dispatch_input(PlatformInput::MouseMove(MouseMoveEvent {
-                            position: start,
+                            position: start.position,
                             pressed_button: None,
                             modifiers: Modifiers::default(),
                         }));
                         window.dispatch_input(PlatformInput::MouseDown(MouseDownEvent {
                             button: MouseButton::Left,
-                            position: start,
+                            position: start.position,
                             modifiers: Modifiers::default(),
                             click_count,
                             first_mouse: false,
                         }));
                         window.dispatch_input(PlatformInput::MouseUp(MouseUpEvent {
                             button: MouseButton::Left,
-                            position: start,
+                            position: start.position,
                             modifiers: Modifiers::default(),
                             click_count,
                         }));
@@ -144,18 +291,49 @@ pub(crate) fn handle_input_event(
                             window.show_soft_keyboard();
                         }
                     }
-                    TouchGesture::Scrolling { .. } => {
+                    TouchGesture::Scrolling {
+                        last,
+                        mut velocity,
+                        mut last_moved_at_nanos,
+                    } => {
+                        let final_delta =
+                            point(position.x - last.position.x, position.y - last.position.y);
+                        if final_delta.x != px(0.0) || final_delta.y != px(0.0) {
+                            last_moved_at_nanos = sample.event_time_nanos;
+                            window.dispatch_input(PlatformInput::ScrollWheel(ScrollWheelEvent {
+                                position,
+                                delta: ScrollDelta::Pixels(final_delta),
+                                modifiers: Modifiers::default(),
+                                touch_phase: TouchPhase::Moved,
+                            }));
+                        }
+                        velocity.push(sample);
                         window.dispatch_input(PlatformInput::ScrollWheel(ScrollWheelEvent {
                             position,
                             delta: ScrollDelta::Pixels(Point::default()),
                             modifiers: Modifiers::default(),
                             touch_phase: TouchPhase::Ended,
                         }));
+                        let released_while_moving =
+                            sample.event_time_nanos.saturating_sub(last_moved_at_nanos)
+                                <= HOLD_SUPPRESSES_MOMENTUM_NANOS;
+                        if released_while_moving
+                            && let Some(velocity) = velocity.velocity().and_then(fling_velocity)
+                        {
+                            *gesture = TouchGesture::Momentum {
+                                velocity,
+                                position,
+                                last_tick: Instant::now(),
+                            };
+                        }
                     }
-                    TouchGesture::None => {}
+                    TouchGesture::None | TouchGesture::Momentum { .. } => {}
                 },
                 MotionAction::Cancel => {
-                    if matches!(gesture, TouchGesture::Scrolling { .. }) {
+                    if matches!(
+                        gesture,
+                        TouchGesture::Scrolling { .. } | TouchGesture::Momentum { .. }
+                    ) {
                         window.dispatch_input(PlatformInput::ScrollWheel(ScrollWheelEvent {
                             position,
                             delta: ScrollDelta::Pixels(Point::default()),
@@ -355,4 +533,43 @@ fn keycode_to_key(keycode: Keycode) -> Option<&'static str> {
         | MetaRight | CapsLock => "",
         _ => return None,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn velocity_tracker_uses_android_event_timestamps() {
+        let mut tracker = VelocityTracker::default();
+        tracker.push(TouchSample {
+            position: point(px(0.0), px(0.0)),
+            event_time_nanos: 1_000_000_000,
+        });
+        tracker.push(TouchSample {
+            position: point(px(0.0), px(-100.0)),
+            event_time_nanos: 1_100_000_000,
+        });
+
+        let velocity = tracker.velocity().unwrap();
+        assert!(velocity.x.abs() < f32::EPSILON);
+        assert!((velocity.y + 1_000.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn fling_velocity_rejects_taps_and_bounds_outliers() {
+        assert!(fling_velocity(point(0.0, 20.0)).is_none());
+        let bounded = fling_velocity(point(0.0, 20_000.0)).unwrap();
+        assert!((bounded.y - FLING_MAXIMUM_SPEED).abs() < 0.01);
+    }
+
+    #[test]
+    fn momentum_decay_is_time_based() {
+        let (_, after_one_frame) = momentum_step(point(0.0, 2_000.0), 0.016);
+        let (_, after_two_frames) = momentum_step(after_one_frame, 0.016);
+        let (_, after_combined_frame) = momentum_step(point(0.0, 2_000.0), 0.032);
+
+        assert!((after_two_frames.y - after_combined_frame.y).abs() < 0.01);
+        assert!(after_two_frames.y < 2_000.0);
+    }
 }
