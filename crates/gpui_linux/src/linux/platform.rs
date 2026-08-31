@@ -5,7 +5,6 @@ use std::{
     fs::File,
     io::Read as _,
     os::fd::{AsFd, AsRawFd},
-    process::Command,
     time::Duration,
 };
 use std::{
@@ -71,10 +70,13 @@ const REQUIRED_SYSTEM_FONT_FAMILIES: &[&str] = &["Noto Color Emoji", "DejaVu San
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
 fn resolved_system_font_data(family: &str) -> Option<Vec<u8>> {
-    let output = Command::new("fc-match")
-        .args(["--format=%{family}\t%{file}\n", "--", family])
-        .output()
-        .ok()?;
+    let output = smol::block_on(async {
+        smol::process::Command::new("fc-match")
+            .args(["--format=%{family}\t%{file}\n", "--", family])
+            .output()
+            .await
+    })
+    .ok()?;
     if !output.status.success() {
         return None;
     }
