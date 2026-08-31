@@ -113,16 +113,9 @@ pub enum SvgSize {
 impl SvgRenderer {
     /// Creates a new SVG renderer with the provided asset source.
     pub fn new(asset_source: Arc<dyn AssetSource>) -> Self {
-        static SYSTEM_FONT_DB: LazyLock<Arc<usvg::fontdb::Database>> = LazyLock::new(|| {
-            let mut db = usvg::fontdb::Database::new();
-            db.load_system_fonts();
-            Arc::new(db)
-        });
-
-        // Build the enriched font DB lazily on first SVG render rather than
-        // eagerly at construction time. This avoids the expensive deep-clone
-        // of the system font database for code paths that never render SVGs
-        // (e.g. tests).
+        // Build the bounded font DB lazily on first SVG render. SVG text uses
+        // only the bundled families, so rendering must not enumerate the host
+        // font directory and reintroduce the desktop startup memory cost.
         let enriched_fontdb: Arc<OnceLock<Arc<usvg::fontdb::Database>>> = Arc::new(OnceLock::new());
 
         let default_font_resolver = usvg::FontResolver::default_font_selector();
@@ -131,7 +124,7 @@ impl SvgRenderer {
             move |font: &usvg::Font, db: &mut Arc<usvg::fontdb::Database>| {
                 if db.is_empty() {
                     let fontdb = enriched_fontdb.get_or_init(|| {
-                        let mut db = (**SYSTEM_FONT_DB).clone();
+                        let mut db = usvg::fontdb::Database::new();
                         load_bundled_fonts(&*asset_source, &mut db);
                         fix_generic_font_families(&mut db);
                         Arc::new(db)
@@ -298,6 +291,7 @@ fn load_bundled_fonts(asset_source: &dyn AssetSource, db: &mut usvg::fontdb::Dat
     let font_paths = [
         "fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf",
         "fonts/lilex/Lilex-Regular.ttf",
+        "fonts/wqy-microhei/wqy-microhei.ttc",
     ];
     for path in font_paths {
         match asset_source.load(path) {

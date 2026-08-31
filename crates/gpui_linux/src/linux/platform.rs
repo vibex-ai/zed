@@ -1,16 +1,18 @@
+#[cfg(any(feature = "wayland", feature = "x11"))]
+use std::{
+    borrow::Cow,
+    ffi::OsString,
+    fs::File,
+    io::Read as _,
+    os::fd::{AsFd, AsRawFd},
+    process::Command,
+    time::Duration,
+};
 use std::{
     env,
     path::{Path, PathBuf},
     rc::Rc,
     sync::Arc,
-};
-#[cfg(any(feature = "wayland", feature = "x11"))]
-use std::{
-    ffi::OsString,
-    fs::File,
-    io::Read as _,
-    os::fd::{AsFd, AsRawFd},
-    time::Duration,
 };
 
 use anyhow::{Context as _, anyhow};
@@ -41,6 +43,83 @@ pub(crate) const DOUBLE_CLICK_INTERVAL: Duration = Duration::from_millis(400);
 #[cfg(any(feature = "wayland", feature = "x11"))]
 pub(crate) const DOUBLE_CLICK_DISTANCE: Pixels = px(5.0);
 pub(crate) const KEYRING_LABEL: &str = "zed-github-account";
+
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const IBM_PLEX_SANS_REGULAR: &[u8] =
+    include_bytes!("../../../../assets/fonts/ibm-plex-sans/IBMPlexSans-Regular.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const IBM_PLEX_SANS_ITALIC: &[u8] =
+    include_bytes!("../../../../assets/fonts/ibm-plex-sans/IBMPlexSans-Italic.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const IBM_PLEX_SANS_SEMIBOLD: &[u8] =
+    include_bytes!("../../../../assets/fonts/ibm-plex-sans/IBMPlexSans-SemiBold.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const IBM_PLEX_SANS_SEMIBOLD_ITALIC: &[u8] =
+    include_bytes!("../../../../assets/fonts/ibm-plex-sans/IBMPlexSans-SemiBoldItalic.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const LILEX_REGULAR: &[u8] = include_bytes!("../../../../assets/fonts/lilex/Lilex-Regular.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const LILEX_ITALIC: &[u8] = include_bytes!("../../../../assets/fonts/lilex/Lilex-Italic.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const LILEX_BOLD: &[u8] = include_bytes!("../../../../assets/fonts/lilex/Lilex-Bold.ttf");
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const LILEX_BOLD_ITALIC: &[u8] =
+    include_bytes!("../../../../assets/fonts/lilex/Lilex-BoldItalic.ttf");
+
+#[cfg(any(feature = "wayland", feature = "x11"))]
+const REQUIRED_SYSTEM_FONT_FAMILIES: &[&str] = &["Noto Color Emoji", "DejaVu Sans"];
+
+#[cfg(any(feature = "wayland", feature = "x11"))]
+fn resolved_system_font_data(family: &str) -> Option<Vec<u8>> {
+    let output = Command::new("fc-match")
+        .args(["--format=%{family}\t%{file}\n", "--", family])
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+
+    let line = String::from_utf8_lossy(&output.stdout);
+    let (matched_family, path) = line.lines().next()?.split_once('\t')?;
+    let family_matches = matched_family
+        .split(',')
+        .any(|candidate| candidate.trim().eq_ignore_ascii_case(family.trim()));
+    if !family_matches {
+        return None;
+    }
+
+    std::fs::read(path.trim()).ok()
+}
+
+#[cfg(any(feature = "wayland", feature = "x11"))]
+fn bounded_text_system() -> Arc<dyn PlatformTextSystem> {
+    let text_system = Arc::new(crate::linux::CosmicTextSystem::new_without_system_fonts(
+        "IBM Plex Sans",
+    ));
+
+    let mut fonts = vec![
+        Cow::Borrowed(IBM_PLEX_SANS_REGULAR),
+        Cow::Borrowed(IBM_PLEX_SANS_ITALIC),
+        Cow::Borrowed(IBM_PLEX_SANS_SEMIBOLD),
+        Cow::Borrowed(IBM_PLEX_SANS_SEMIBOLD_ITALIC),
+        Cow::Borrowed(LILEX_REGULAR),
+        Cow::Borrowed(LILEX_ITALIC),
+        Cow::Borrowed(LILEX_BOLD),
+        Cow::Borrowed(LILEX_BOLD_ITALIC),
+    ];
+    for family in REQUIRED_SYSTEM_FONT_FAMILIES {
+        if let Some(data) = resolved_system_font_data(family) {
+            fonts.push(Cow::Owned(data));
+        } else {
+            log::debug!("fontconfig could not resolve required font family {family:?}");
+        }
+    }
+
+    if let Err(error) = text_system.add_fonts(fonts) {
+        log::warn!("failed to load bounded Linux font set: {error:#}");
+    }
+    text_system
+}
 
 #[cfg(any(feature = "wayland", feature = "x11"))]
 const FILE_PICKER_PORTAL_MISSING: &str =
@@ -145,7 +224,7 @@ impl LinuxCommon {
         let (wake_sender, wake_receiver) = calloop::channel::channel();
 
         #[cfg(any(feature = "wayland", feature = "x11"))]
-        let text_system = Arc::new(crate::linux::CosmicTextSystem::new("IBM Plex Sans"));
+        let text_system = bounded_text_system();
         #[cfg(not(any(feature = "wayland", feature = "x11")))]
         let text_system = Arc::new(gpui::NoopTextSystem::new());
 

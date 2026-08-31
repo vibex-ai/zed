@@ -259,13 +259,13 @@ impl CosmicTextSystemState {
             _ => Arc::from(Vec::new()),
         };
 
-        let name = gpui::font_name_with_fallbacks(name, &self.system_font_fallback);
+        let name = resolved_family_name(name, &self.system_font_fallback);
 
         let families = self
             .font_system
             .db()
             .faces()
-            .filter(|face| face.families.iter().any(|family| *name == family.0))
+            .filter(|face| face.families.iter().any(|family| name.as_ref() == family.0))
             .map(|face| (face.id, face.post_script_name.clone()))
             .collect::<SmallVec<[_; 4]>>();
 
@@ -712,6 +712,17 @@ impl CosmicTextSystemState {
     }
 }
 
+fn resolved_family_name(name: &str, system_font_fallback: &str) -> String {
+    let name = gpui::font_name_with_fallbacks(name, system_font_fallback);
+    if name.eq_ignore_ascii_case("monospace") {
+        "Lilex".to_string()
+    } else if name.eq_ignore_ascii_case("sans-serif") {
+        system_font_fallback.to_string()
+    } else {
+        name.to_string()
+    }
+}
+
 #[inline(always)]
 fn is_paragraph_separator(character: char) -> bool {
     unicode_bidi::bidi_class(character) == unicode_bidi::BidiClass::B
@@ -996,6 +1007,19 @@ fn check_is_known_emoji_font(postscript_name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn logical_font_families_resolve_to_bundled_fallbacks() {
+        assert_eq!(resolved_family_name("monospace", "IBM Plex Sans"), "Lilex");
+        assert_eq!(
+            resolved_family_name("sans-serif", "IBM Plex Sans"),
+            "IBM Plex Sans"
+        );
+        assert_eq!(
+            resolved_family_name("Inter Variable", "IBM Plex Sans"),
+            "Inter Variable"
+        );
+    }
 
     fn fid(i: usize) -> FontId {
         FontId(i)
