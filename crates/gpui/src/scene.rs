@@ -50,6 +50,10 @@ pub struct Scene {
     pub subpixel_sprites: Vec<SubpixelSprite>,
     pub polychrome_sprites: Vec<PolychromeSprite>,
     pub surfaces: Vec<PaintSurface>,
+    /// Backdrop-blur regions — deliberately OUTSIDE the primitive batch
+    /// stream: the renderer breaks its render pass at each blur's order to
+    /// snapshot the framebuffer.
+    pub backdrop_blurs: Vec<BackdropBlur>,
 }
 
 #[expect(missing_docs)]
@@ -66,6 +70,7 @@ impl Scene {
         self.subpixel_sprites.clear();
         self.polychrome_sprites.clear();
         self.surfaces.clear();
+        self.backdrop_blurs.clear();
     }
 
     pub fn len(&self) -> usize {
@@ -82,6 +87,21 @@ impl Scene {
     pub fn pop_layer(&mut self) {
         self.layer_stack.pop();
         self.paint_operations.push(PaintOperation::EndLayer);
+    }
+
+    pub fn insert_backdrop_blur(&mut self, mut blur: BackdropBlur) {
+        let clipped_bounds = blur.bounds.intersect(&blur.content_mask.bounds);
+        if clipped_bounds.is_empty() {
+            return;
+        }
+        blur.order = self
+            .layer_stack
+            .last()
+            .copied()
+            .unwrap_or_else(|| self.primitive_bounds.insert(clipped_bounds));
+        self.backdrop_blurs.push(blur);
+        self.paint_operations
+            .push(PaintOperation::BackdropBlur(blur));
     }
 
     pub fn insert_primitive(&mut self, primitive: impl Into<Primitive>) {
@@ -142,6 +162,7 @@ impl Scene {
         for operation in &prev_scene.paint_operations[range] {
             match operation {
                 PaintOperation::Primitive(primitive) => self.insert_primitive(primitive.clone()),
+                PaintOperation::BackdropBlur(blur) => self.insert_backdrop_blur(*blur),
                 PaintOperation::StartLayer(bounds) => self.push_layer(*bounds),
                 PaintOperation::EndLayer => self.pop_layer(),
             }
@@ -160,6 +181,7 @@ impl Scene {
         self.polychrome_sprites
             .sort_by_key(|sprite| (sprite.order, sprite.tile.tile_id));
         self.surfaces.sort_by_key(|surface| surface.order);
+        self.backdrop_blurs.sort_by_key(|blur| blur.order);
     }
 
     #[cfg_attr(
@@ -213,6 +235,7 @@ pub(crate) enum PrimitiveKind {
 
 pub(crate) enum PaintOperation {
     Primitive(Primitive),
+    BackdropBlur(BackdropBlur),
     StartLayer(Bounds<ScaledPixels>),
     EndLayer,
 }
@@ -541,12 +564,47 @@ pub struct Quad {
     pub border_color: Hsla,
     pub corner_radii: Corners<ScaledPixels>,
     pub border_widths: Edges<ScaledPixels>,
+    pub fade: EdgeFadeParams,
 }
 
 impl From<Quad> for Primitive {
     fn from(quad: Quad) -> Self {
         Primitive::Quad(quad)
     }
+}
+
+/// Per-primitive scoped edge fade (see `Window::with_edge_fade`): the
+/// fragment shader multiplies alpha by a squared ramp measured from these
+/// window-space edges (device pixels) — a TRUE per-pixel fade, so large
+/// fills and images dissolve across the band instead of popping at their
+/// bounding-box edge. A zero band disables that edge; zeroed = no fade.
+#[derive(Default, Debug, Copy, Clone, PartialEq)]
+#[repr(C)]
+#[expect(missing_docs)]
+pub struct EdgeFadeParams {
+    pub top_y: f32,
+    pub bottom_y: f32,
+    pub band_top: f32,
+    pub band_bottom: f32,
+    pub left_x: f32,
+    pub right_x: f32,
+    pub band_left: f32,
+    pub band_right: f32,
+}
+
+/// A within-window backdrop blur region: the renderer snapshots everything
+/// painted below this order and paints it back gaussian-blurred inside the
+/// rounded bounds (frosted-glass popovers). See
+/// [`crate::Window::paint_backdrop_blur`].
+#[derive(Debug, Copy, Clone)]
+#[repr(C)]
+#[expect(missing_docs)]
+pub struct BackdropBlur {
+    pub order: DrawOrder,
+    pub blur_radius: ScaledPixels,
+    pub bounds: Bounds<ScaledPixels>,
+    pub content_mask: ContentMask<ScaledPixels>,
+    pub corner_radii: Corners<ScaledPixels>,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -754,6 +812,7 @@ pub struct PolychromeSprite {
     pub bounds: Bounds<ScaledPixels>,
     pub content_mask: ContentMask<ScaledPixels>,
     pub corner_radii: Corners<ScaledPixels>,
+    pub fade: EdgeFadeParams,
     pub tile: AtlasTile,
 }
 
