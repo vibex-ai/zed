@@ -127,8 +127,12 @@ struct BackdropScratch {
     blur_height: u32,
     snapshot: wgpu::Texture,
     snapshot_view: wgpu::TextureView,
+    // The textures are held alongside their views so the GPU memory behind
+    // each view stays alive for the scratch's lifetime.
+    #[allow(dead_code)]
     blur_a: wgpu::Texture,
     blur_a_view: wgpu::TextureView,
+    #[allow(dead_code)]
     blur_b: wgpu::Texture,
     blur_b_view: wgpu::TextureView,
 }
