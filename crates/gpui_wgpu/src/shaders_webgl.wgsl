@@ -135,8 +135,21 @@ fn read_transformation(cursor: ptr<function, InstanceCursor>) -> TransformationM
     );
 }
 
+fn read_edge_fade(cursor: ptr<function, InstanceCursor>) -> EdgeFadeParams {
+    return EdgeFadeParams(
+        read_f32(cursor),
+        read_f32(cursor),
+        read_f32(cursor),
+        read_f32(cursor),
+        read_f32(cursor),
+        read_f32(cursor),
+        read_f32(cursor),
+        read_f32(cursor),
+    );
+}
+
 fn load_quad(instance_id: u32) -> Quad {
-    var cursor = instance_cursor(instance_id * 40u);
+    var cursor = instance_cursor(instance_id * 48u);
     return Quad(
         read_word(&cursor),
         read_word(&cursor),
@@ -146,6 +159,7 @@ fn load_quad(instance_id: u32) -> Quad {
         read_hsla(&cursor),
         read_corners(&cursor),
         read_edges(&cursor),
+        read_edge_fade(&cursor),
     );
 }
 
@@ -207,7 +221,7 @@ fn load_mono_sprite(instance_id: u32) -> MonochromeSprite {
 }
 
 fn load_poly_sprite(instance_id: u32) -> PolychromeSprite {
-    var cursor = instance_cursor(instance_id * 24u);
+    var cursor = instance_cursor(instance_id * 32u);
     return PolychromeSprite(
         read_word(&cursor),
         read_word(&cursor),
@@ -216,6 +230,7 @@ fn load_poly_sprite(instance_id: u32) -> PolychromeSprite {
         read_bounds(&cursor),
         read_bounds(&cursor),
         read_corners(&cursor),
+        read_edge_fade(&cursor),
         read_atlas_tile(&cursor),
     );
 }
