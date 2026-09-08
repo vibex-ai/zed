@@ -464,7 +464,9 @@ fn modifiers_from_meta_state(meta_state: MetaState) -> Modifiers {
 /// Maps an Android keycode to GPUI's key names (see `Keystroke::parse`).
 /// Returns `Some("")` for modifier keys (handled via ModifiersChanged) and
 /// `None` for keys we don't handle so the OS can apply default behavior
-/// (volume, back, etc.).
+/// (volume, etc.). The back key is mapped as well: the app consumes it for
+/// in-app navigation, and Android already moves the host activity to the
+/// background when no event handler claims the keystroke.
 fn keycode_to_key(keycode: Keycode) -> Option<&'static str> {
     use Keycode::*;
     Some(match keycode {
@@ -510,6 +512,7 @@ fn keycode_to_key(keycode: Keycode) -> Option<&'static str> {
         Del => "backspace",
         ForwardDel => "delete",
         Escape => "escape",
+        Back => "back",
         DpadUp => "up",
         DpadDown => "down",
         DpadLeft => "left",
