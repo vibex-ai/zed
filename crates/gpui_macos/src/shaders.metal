@@ -36,6 +36,7 @@ float4 over(float4 below, float4 above);
 float radians(float degrees);
 float4 fill_color(Background background, float2 position, Bounds_ScaledPixels bounds,
   float4 solid_color, float4 color0, float4 color1);
+float edge_fade_alpha(float2 position, EdgeFadeParams fade);
 
 struct GradientColor {
   float4 solid;
@@ -1276,4 +1277,77 @@ float4 fill_color(Background background,
   }
 
   return color;
+}
+
+// Scoped edge fade, PER PIXEL (Quad::fade / PolychromeSprite::fade): a
+// squared ramp from 0 at the fade edge to 1 a band further in, matching the
+// CPU per-glyph curve. Zero band = that edge disabled; zeroed struct = no-op.
+float edge_fade_alpha(float2 position, EdgeFadeParams fade) {
+  float ramp = 1.0;
+  if (fade.band_top > 0.0) {
+    ramp = min(ramp, saturate((position.y - fade.top_y) / fade.band_top));
+  }
+  if (fade.band_bottom > 0.0) {
+    ramp = min(ramp, saturate((fade.bottom_y - position.y) / fade.band_bottom));
+  }
+  if (fade.band_left > 0.0) {
+    ramp = min(ramp, saturate((position.x - fade.left_x) / fade.band_left));
+  }
+  if (fade.band_right > 0.0) {
+    ramp = min(ramp, saturate((fade.right_x - position.x) / fade.band_right));
+  }
+  return ramp * ramp;
+}
+
+struct BackdropBlurVertexOutput {
+  float4 position [[position]];
+  uint blur_id [[flat]];
+  float clip_distance [[clip_distance]][4];
+};
+
+struct BackdropBlurFragmentInput {
+  float4 position [[position]];
+  uint blur_id [[flat]];
+};
+
+vertex BackdropBlurVertexOutput backdrop_blur_vertex(
+    uint unit_vertex_id [[vertex_id]], uint blur_id [[instance_id]],
+    constant float2 *unit_vertices [[buffer(BackdropBlurInputIndex_Vertices)]],
+    constant BackdropBlur *blurs [[buffer(BackdropBlurInputIndex_Blurs)]],
+    constant Size_DevicePixels *viewport_size
+    [[buffer(BackdropBlurInputIndex_ViewportSize)]]) {
+  float2 unit_vertex = unit_vertices[unit_vertex_id];
+  BackdropBlur blur = blurs[blur_id];
+  float4 device_position =
+      to_device_position(unit_vertex, blur.bounds, viewport_size);
+  float4 clip_distance = distance_from_clip_rect(unit_vertex, blur.bounds,
+                                                 blur.content_mask.bounds);
+  return BackdropBlurVertexOutput{
+      device_position,
+      blur_id,
+      {clip_distance.x, clip_distance.y, clip_distance.z, clip_distance.w}};
+}
+
+fragment float4 backdrop_blur_fragment(
+    BackdropBlurFragmentInput input [[stage_in]],
+    constant BackdropBlur *blurs [[buffer(BackdropBlurInputIndex_Blurs)]],
+    constant float4 &source_rect [[buffer(BackdropBlurInputIndex_SourceRect)]],
+    texture2d<float> source_texture
+    [[texture(BackdropBlurInputIndex_SourceTexture)]]) {
+  constexpr sampler source_sampler(coord::normalized, address::clamp_to_edge,
+                                   filter::linear);
+  BackdropBlur blur = blurs[input.blur_id];
+
+  // Rounded-rect clip: blending is disabled on this pipeline (the blur
+  // REPLACES the region), so fragments outside must discard, not return 0.
+  float distance = quad_sdf(input.position.xy, blur.bounds, blur.corner_radii);
+  if (distance > 0.) {
+    discard_fragment();
+  }
+
+  // The snapshot was gaussian-blurred on the GPU (MPSImageGaussianBlur)
+  // before this pass — one clean sample. The snapshot covers only
+  // source_rect (x, y, w, h) of the drawable, not the whole viewport.
+  float2 uv = (input.position.xy - source_rect.xy) / source_rect.zw;
+  return source_texture.sample(source_sampler, uv);
 }
