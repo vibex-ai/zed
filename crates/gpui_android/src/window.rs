@@ -639,8 +639,6 @@ impl PlatformWindow for AndroidWindow {
         state.renderer.draw(scene);
     }
 
-    fn completed_frame(&self) {}
-
     fn sprite_atlas(&self) -> Arc<dyn PlatformAtlas> {
         self.inner.state.borrow().renderer.sprite_atlas().clone()
     }

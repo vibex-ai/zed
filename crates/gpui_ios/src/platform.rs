@@ -20,7 +20,7 @@ use objc::{
 };
 use std::{
     cell::{Cell, RefCell},
-    ffi::CString,
+    ffi::{CString, OsString},
     os::raw::{c_char, c_int},
     path::{Path, PathBuf},
     ptr,
@@ -204,7 +204,7 @@ impl Platform for IosPlatform {
 
     fn quit(&self) {}
 
-    fn restart(&self, _binary_path: Option<PathBuf>) {}
+    fn restart(&self, _binary_path: Option<PathBuf>, _arguments: Vec<OsString>) {}
 
     fn activate(&self, _ignoring_other_apps: bool) {}
 
@@ -277,7 +277,7 @@ impl Platform for IosPlatform {
 
     fn open_with_system(&self, _path: &Path) {}
 
-    fn on_quit(&self, _callback: Box<dyn FnMut()>) {}
+    fn on_quit(&self, _callback: Box<dyn FnMut() -> bool>) {}
 
     fn on_reopen(&self, _callback: Box<dyn FnMut()>) {}
 
