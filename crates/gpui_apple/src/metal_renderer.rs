@@ -7,8 +7,8 @@ use cocoa::{
     quartzcore::AutoresizingMask,
 };
 use gpui::{
-    AtlasTextureId, BackdropBlur, Background, Bounds, ContentMask, DevicePixels, DrawOrder,
-    PaintSurface, Path, Point, PrimitiveBatch, ScaledPixels, Scene, Size, point, size,
+    AtlasTextureId, Background, Bounds, ContentMask, DevicePixels, DrawOrder, PaintSurface, Path,
+    Point, PrimitiveBatch, ScaledPixels, Scene, Size, point, size,
 };
 #[cfg(any(test, feature = "bench-support", feature = "test-support"))]
 use image::RgbaImage;
@@ -22,7 +22,7 @@ use foreign_types::{ForeignType, ForeignTypeRef};
 use metal::{
     CAMetalLayer, CommandQueue, MTLGPUFamily, MTLPixelFormat, MTLResourceOptions, NSRange,
 };
-use objc::{self, msg_send, sel, sel_impl};
+use objc::{self, class, msg_send, sel, sel_impl};
 use parking_lot::Mutex;
 
 use std::{cell::Cell, ffi::c_void, mem, mem::MaybeUninit, ops::Range, ptr, slice, sync::Arc};
@@ -735,7 +735,7 @@ impl MetalRenderer {
                 .peek()
                 .is_some_and(|(_, blur)| blur.order <= batch_first_order(scene, &batch))
             {
-                let (blur_index, blur) = *pending_blurs.next().unwrap();
+                let (_, blur) = pending_blurs.next().unwrap();
                 // The blur only ever samples its visible (clipped) bounds,
                 // and the gaussian only reaches ~3σ beyond a sampled pixel —
                 // so snapshot just that padded region instead of the whole
@@ -818,7 +818,7 @@ impl MetalRenderer {
                     scratch.height() as f32,
                 ];
                 let blur_binding = writer
-                    .write(std::slice::from_ref(&blur))
+                    .write(std::slice::from_ref(blur))
                     .with_context(|| "scene too large for backdrop blur instances")?;
                 self.draw_backdrop_blur(
                     &blur_binding,
