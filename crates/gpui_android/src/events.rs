@@ -9,7 +9,7 @@ use gpui::{
     ScrollWheelEvent, TouchPhase, point, px,
 };
 use std::collections::{HashMap, VecDeque};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Distance (logical px) a touch may travel before it stops being a tap and
 /// becomes a scroll.
@@ -18,6 +18,11 @@ const DOUBLE_TAP_MILLIS: u128 = 400;
 const DOUBLE_TAP_DISTANCE: f32 = 16.0;
 const VELOCITY_WINDOW_NANOS: i64 = 100_000_000;
 const HOLD_SUPPRESSES_MOMENTUM_NANOS: i64 = 100_000_000;
+/// How long a finger must stay down without travelling past the slop before the
+/// press counts as a long press rather than a tap. Matches Android's own
+/// long-press timeout so the synthetic equivalent does not feel early next to
+/// the system's.
+const LONG_PRESS_DURATION: Duration = Duration::from_millis(500);
 const FLING_MINIMUM_SPEED: f32 = 50.0;
 const FLING_MAXIMUM_SPEED: f32 = 8_000.0;
 const MOMENTUM_MINIMUM_SPEED: f32 = 10.0;
@@ -138,7 +143,12 @@ pub(crate) enum TouchGesture {
     Pending {
         start: TouchSample,
         velocity: VelocityTracker,
+        started_at: Instant,
     },
+    /// The finger stayed down long enough to become a long press. The right
+    /// click it stands for has already been dispatched, so the remainder of the
+    /// gesture is consumed rather than also becoming a tap or a scroll.
+    LongPress,
     Scrolling {
         last: TouchSample,
         velocity: VelocityTracker,
@@ -186,6 +196,48 @@ pub(crate) fn tick_scroll_momentum(window: &AndroidWindowInner, gesture: &mut To
     window.dispatch_input(PlatformInput::ScrollWheel(event));
 }
 
+/// Fire the long press once the finger has been down long enough.
+///
+/// Android hands a held finger to the IME rather than to the app, so nothing in
+/// the touch stream ever reports a long press and every text field in the app is
+/// left without a select / cut / copy / paste menu. GPUI has no touch event
+/// variants either, so the gesture is surfaced as a synthetic right click:
+/// inputs already read a right `MouseDown` as "arm the context menu here" and
+/// the matching `MouseUp` as "open it". Both are sent at the threshold so the
+/// menu appears while the finger is still down, which is when Android shows it.
+///
+/// Driven from the frame tick rather than from a touch event because the gesture
+/// is defined by the absence of events.
+pub(crate) fn tick_long_press(window: &AndroidWindowInner, gesture: &mut TouchGesture) {
+    let TouchGesture::Pending {
+        start, started_at, ..
+    } = gesture
+    else {
+        return;
+    };
+    if started_at.elapsed() < LONG_PRESS_DURATION {
+        return;
+    }
+    let position = start.position;
+    let modifiers = Modifiers::default();
+    window.dispatch_input(PlatformInput::MouseDown(MouseDownEvent {
+        button: MouseButton::Right,
+        position,
+        modifiers,
+        // Not routed through the click tracker: a long press is not a tap, and
+        // counting it would let a following tap read as a double click.
+        click_count: 1,
+        first_mouse: false,
+    }));
+    window.dispatch_input(PlatformInput::MouseUp(MouseUpEvent {
+        button: MouseButton::Right,
+        position,
+        modifiers,
+        click_count: 1,
+    }));
+    *gesture = TouchGesture::LongPress;
+}
+
 pub(crate) fn handle_input_event(
     event: &InputEvent<'_>,
     window: &AndroidWindowInner,
@@ -212,10 +264,13 @@ pub(crate) fn handle_input_event(
                     *gesture = TouchGesture::Pending {
                         start: sample,
                         velocity,
+                        started_at: Instant::now(),
                     };
                 }
                 MotionAction::Move => match gesture {
-                    TouchGesture::Pending { start, velocity } => {
+                    TouchGesture::Pending {
+                        start, velocity, ..
+                    } => {
                         velocity.push(sample);
                         let moved = ((f32::from(position.x) - f32::from(start.position.x)).powi(2)
                             + (f32::from(position.y) - f32::from(start.position.y)).powi(2))
@@ -257,6 +312,7 @@ pub(crate) fn handle_input_event(
                             touch_phase: TouchPhase::Moved,
                         }));
                     }
+                    TouchGesture::LongPress => {}
                     TouchGesture::None | TouchGesture::Momentum { .. } => {}
                 },
                 MotionAction::Up => match std::mem::take(gesture) {
@@ -332,6 +388,8 @@ pub(crate) fn handle_input_event(
                             };
                         }
                     }
+                    // Deliberately not a tap: the press already did its work.
+                    TouchGesture::LongPress => {}
                     TouchGesture::None | TouchGesture::Momentum { .. } => {}
                 },
                 MotionAction::Cancel => {
