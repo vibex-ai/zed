@@ -490,7 +490,8 @@ impl WgpuRenderer {
         let backdrop_blur_supported = surface_caps.usages.contains(wgpu::TextureUsages::COPY_SRC);
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                | backdrop_blur_supported.then_some(wgpu::TextureUsages::COPY_SRC)
+                | backdrop_blur_supported
+                    .then_some(wgpu::TextureUsages::COPY_SRC)
                     .unwrap_or(wgpu::TextureUsages::empty()),
             format: surface_format,
             width: clamped_width.max(1),
@@ -1651,8 +1652,8 @@ impl WgpuRenderer {
                         continue;
                     }
                     drop(pass);
-                    let blurred = self
-                        .process_backdrop_blur(&mut encoder, frame_texture, blur, blur_index);
+                    let blurred =
+                        self.process_backdrop_blur(&mut encoder, frame_texture, blur, blur_index);
                     pass = Self::continue_main_pass(&mut encoder, frame_view);
                     if blurred {
                         self.draw_backdrop_composite(blur_index, &mut pass);
@@ -1812,8 +1813,7 @@ impl WgpuRenderer {
         // radius rather than the device-pixel radius; both passes then run at
         // an effective σ in their own texel space.
         let downsample = ((sigma / 8.0) as u32).clamp(1, 4);
-        let scratch =
-            self.ensure_backdrop_scratch((x1 - x0) as u32, (y1 - y0) as u32, downsample);
+        let scratch = self.ensure_backdrop_scratch((x1 - x0) as u32, (y1 - y0) as u32, downsample);
 
         // Position the copy window so it covers the padded region yet stays
         // inside the drawable, and fill the ENTIRE snapshot texture: texture

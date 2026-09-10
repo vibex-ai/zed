@@ -166,8 +166,7 @@ struct BackdropTextures {
 
 impl BackdropTextures {
     fn bytes(&self) -> u64 {
-        let texture_bytes =
-            |texture: &metal::Texture| texture.width() * texture.height() * 4;
+        let texture_bytes = |texture: &metal::Texture| texture.width() * texture.height() * 4;
         texture_bytes(&self.scratch) + texture_bytes(&self.blurred)
     }
 }
@@ -805,12 +804,8 @@ impl MetalRenderer {
                         ];
                     }
                 }
-                command_encoder = new_command_encoder_for_texture(
-                    command_buffer,
-                    texture,
-                    viewport_size,
-                    None,
-                );
+                command_encoder =
+                    new_command_encoder_for_texture(command_buffer, texture, viewport_size, None);
                 let source_rect = [
                     copy_x as f32,
                     copy_y as f32,
@@ -1080,12 +1075,7 @@ impl MetalRenderer {
             BackdropBlurInputIndex::SourceTexture as u64,
             Some(source_texture),
         );
-        command_encoder.draw_primitives_instanced(
-            metal::MTLPrimitiveType::Triangle,
-            0,
-            6,
-            1,
-        );
+        command_encoder.draw_primitives_instanced(metal::MTLPrimitiveType::Triangle, 0, 6, 1);
     }
 
     fn draw_paths_to_intermediate(

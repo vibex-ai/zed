@@ -98,7 +98,7 @@ dependencies = [
  "feature_flags",
  "file_icons",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_proxy",
  "image",
  "indoc",
@@ -138,7 +138,7 @@ dependencies = [
  "agent_servers",
  "agent_ui",
  "collections",
- "gpui",
+ "gpui-pre",
  "language",
  "markdown",
  "project",
@@ -162,7 +162,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "git",
- "gpui",
+ "gpui-pre",
  "indoc",
  "language",
  "log",
@@ -188,7 +188,7 @@ dependencies = [
  "extension_host",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "language",
  "project",
  "proto",
@@ -263,7 +263,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "git",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "handlebars 4.5.0",
  "heck 0.5.0",
@@ -384,7 +384,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "google_ai",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "http_client",
  "indoc",
@@ -417,7 +417,7 @@ dependencies = [
  "convert_case 0.11.0",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "language_model",
  "log",
  "paths",
@@ -440,7 +440,7 @@ dependencies = [
  "const_format",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "paths",
  "serde",
  "serde_json",
@@ -485,7 +485,7 @@ dependencies = [
  "fuzzy",
  "git",
  "git_ui_core",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "heapless",
  "html_to_markdown",
@@ -594,7 +594,7 @@ dependencies = [
  "client",
  "cloud_api_types",
  "component",
- "gpui",
+ "gpui-pre",
  "language_model",
  "smallvec",
  "telemetry",
@@ -960,7 +960,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "log",
  "net",
  "smol",
@@ -976,7 +976,7 @@ name = "assets"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
  "util",
 ]
 
@@ -1386,7 +1386,7 @@ dependencies = [
  "collections",
  "cpal",
  "crossbeam",
- "gpui",
+ "gpui-pre",
  "libwebrtc",
  "log",
  "parking_lot",
@@ -1419,7 +1419,7 @@ dependencies = [
  "db",
  "futures 0.3.32",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
  "http_client",
  "log",
  "parking_lot",
@@ -1460,7 +1460,7 @@ dependencies = [
  "client",
  "db",
  "editor",
- "gpui",
+ "gpui-pre",
  "markdown_preview",
  "prompt_store",
  "release_channel",
@@ -2164,7 +2164,7 @@ dependencies = [
  "criterion",
  "editor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "indoc",
  "itertools 0.14.0",
@@ -2434,7 +2434,7 @@ dependencies = [
 name = "breadcrumbs"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "ui",
  "workspace",
 ]
@@ -2480,7 +2480,8 @@ version = "0.1.0"
 dependencies = [
  "clock",
  "ctor",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "imara-diff",
  "language",
  "log",
@@ -2488,7 +2489,6 @@ dependencies = [
  "rand 0.9.4",
  "rope",
  "settings",
- "sum_tree",
  "text",
  "tracing",
  "unindent",
@@ -2677,7 +2677,7 @@ dependencies = [
  "feature_flags",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "language",
  "livekit_client",
@@ -2699,7 +2699,7 @@ dependencies = [
  "editor",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "lsp",
@@ -2967,7 +2967,7 @@ dependencies = [
  "clock",
  "collections",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "language",
  "log",
@@ -3175,7 +3175,7 @@ dependencies = [
  "feature_flags",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "http_client",
  "http_client_tls",
@@ -3231,7 +3231,7 @@ dependencies = [
  "cloud_api_types",
  "futures 0.3.32",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "http_client",
  "parking_lot",
@@ -3365,7 +3365,7 @@ dependencies = [
  "edit_prediction",
  "edit_prediction_types",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "icons",
  "language",
@@ -3415,7 +3415,7 @@ dependencies = [
  "git",
  "git_hosting_providers",
  "git_ui",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "hex",
  "http_client",
@@ -3488,7 +3488,7 @@ dependencies = [
  "editor",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "livekit_client",
  "menu",
  "notifications",
@@ -3563,7 +3563,7 @@ dependencies = [
  "editor",
  "fuzzy_nucleo",
  "go_to_line",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "menu",
@@ -3588,7 +3588,7 @@ version = "0.1.0"
 dependencies = [
  "collections",
  "derive_more",
- "gpui",
+ "gpui-pre",
  "workspace",
 ]
 
@@ -3617,7 +3617,7 @@ version = "0.1.0"
 dependencies = [
  "collections",
  "documented",
- "gpui",
+ "gpui-pre",
  "inventory",
  "parking_lot",
  "strum 0.28.0",
@@ -3637,7 +3637,7 @@ dependencies = [
  "editor",
  "env_logger 0.11.8",
  "fs",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "language",
  "log",
@@ -3769,7 +3769,7 @@ dependencies = [
  "collections",
  "futures 0.3.32",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
  "http_client",
  "log",
  "net",
@@ -3818,7 +3818,8 @@ dependencies = [
  "editor",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "icons",
  "indoc",
  "language",
@@ -3833,7 +3834,6 @@ dependencies = [
  "serde",
  "serde_json",
  "settings",
- "sum_tree",
  "theme",
  "theme_settings",
  "util",
@@ -3850,7 +3850,7 @@ dependencies = [
  "collections",
  "credentials_provider",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "language_model",
  "log",
@@ -3866,7 +3866,7 @@ dependencies = [
  "anyhow",
  "copilot",
  "copilot_chat",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "lsp",
@@ -4377,7 +4377,7 @@ name = "credentials_provider"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
 ]
 
 [[package]]
@@ -4647,7 +4647,7 @@ dependencies = [
  "dap-types",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "language",
  "log",
@@ -4688,7 +4688,7 @@ dependencies = [
  "dotenvy",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "json_dotpath",
  "language",
@@ -4843,7 +4843,7 @@ name = "db"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
  "indoc",
  "inventory",
  "log",
@@ -4877,7 +4877,7 @@ dependencies = [
  "collections",
  "dap",
  "extension",
- "gpui",
+ "gpui-pre",
  "serde_json",
  "task",
  "util",
@@ -4891,7 +4891,7 @@ dependencies = [
  "dap",
  "editor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "project",
  "serde_json",
  "settings",
@@ -4917,7 +4917,7 @@ dependencies = [
  "file_icons",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "hex",
  "indoc",
  "itertools 0.14.0",
@@ -5067,7 +5067,7 @@ dependencies = [
  "env_logger 0.11.8",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http 1.3.1",
  "http_client",
  "indoc",
@@ -5100,7 +5100,7 @@ dependencies = [
  "ctor",
  "editor",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
  "indoc",
  "itertools 0.14.0",
  "language",
@@ -5401,7 +5401,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "git",
- "gpui",
+ "gpui-pre",
  "heapless",
  "indoc",
  "itertools 0.14.0",
@@ -5466,7 +5466,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "gaoya",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "gpui_tokio",
  "http_client",
@@ -5516,7 +5516,7 @@ dependencies = [
  "collections",
  "env_logger 0.11.8",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "indoc",
  "language",
  "log",
@@ -5552,7 +5552,7 @@ name = "edit_prediction_types"
 version = "0.1.0"
 dependencies = [
  "client",
- "gpui",
+ "gpui-pre",
  "icons",
  "language",
  "text",
@@ -5577,7 +5577,7 @@ dependencies = [
  "feature_flags",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "indoc",
  "language",
  "markdown",
@@ -5623,7 +5623,8 @@ dependencies = [
  "futures-lite 2.6.1",
  "fuzzy",
  "git",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "indoc",
  "itertools 0.14.0",
  "language",
@@ -5653,7 +5654,6 @@ dependencies = [
  "settings",
  "smallvec",
  "snippet",
- "sum_tree",
  "task",
  "telemetry",
  "text",
@@ -5691,7 +5691,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "editor",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "language",
  "multi_buffer",
@@ -5810,7 +5810,7 @@ dependencies = [
  "editor",
  "encoding_rs",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "picker",
  "project",
@@ -6012,7 +6012,7 @@ name = "etw_tracing"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
  "net",
  "serde",
  "serde_json",
@@ -6051,7 +6051,7 @@ dependencies = [
  "feature_flags",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "gpui_tokio",
  "language",
@@ -6162,7 +6162,7 @@ dependencies = [
  "dap",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "heck 0.5.0",
  "http_client",
  "indoc",
@@ -6234,7 +6234,7 @@ dependencies = [
  "extension",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "http_client",
  "language",
@@ -6287,7 +6287,7 @@ dependencies = [
  "fs",
  "fuzzy",
  "git",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "num-format",
@@ -6391,7 +6391,7 @@ dependencies = [
  "collections",
  "feature_flags_macros",
  "fs",
- "gpui",
+ "gpui-pre",
  "inventory",
  "schemars 1.0.4",
  "serde_json",
@@ -6413,7 +6413,7 @@ version = "0.1.0"
 dependencies = [
  "client",
  "extension_host",
- "gpui",
+ "gpui-pre",
  "system_specs",
  "urlencoding",
  "util",
@@ -6445,7 +6445,7 @@ dependencies = [
  "futures 0.3.32",
  "fuzzy",
  "fuzzy_nucleo",
- "gpui",
+ "gpui-pre",
  "language",
  "menu",
  "open_path_prompt",
@@ -6468,7 +6468,7 @@ dependencies = [
 name = "file_icons"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "settings_content",
  "theme",
  "util",
@@ -6723,7 +6723,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "git",
- "gpui",
+ "gpui-pre",
  "ignore",
  "is_executable",
  "libc",
@@ -6775,7 +6775,7 @@ name = "fs_benchmarks"
 version = "0.1.0"
 dependencies = [
  "fs",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
 ]
 
@@ -6959,7 +6959,7 @@ dependencies = [
 name = "fuzzy"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "log",
  "path",
@@ -6971,7 +6971,7 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "nucleo",
  "path",
@@ -7157,7 +7157,8 @@ dependencies = [
  "collections",
  "derive_more",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "http_client",
  "itertools 0.14.0",
  "log",
@@ -7171,7 +7172,6 @@ dependencies = [
  "serde_json",
  "smallvec",
  "smol",
- "sum_tree",
  "tempfile",
  "text",
  "thiserror 2.0.17",
@@ -7191,7 +7191,7 @@ dependencies = [
  "async-trait",
  "futures 0.3.32",
  "git",
- "gpui",
+ "gpui-pre",
  "http_client",
  "indoc",
  "itertools 0.14.0",
@@ -7229,7 +7229,7 @@ dependencies = [
  "fuzzy_nucleo",
  "git",
  "git_ui_core",
- "gpui",
+ "gpui-pre",
  "indoc",
  "itertools 0.14.0",
  "language",
@@ -7288,7 +7288,7 @@ dependencies = [
  "futures 0.3.32",
  "fuzzy",
  "git",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "menu",
@@ -7429,7 +7429,7 @@ name = "go_to_line"
 version = "0.1.0"
 dependencies = [
  "editor",
- "gpui",
+ "gpui-pre",
  "indoc",
  "language",
  "menu",
@@ -7517,8 +7517,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpui"
-version = "0.2.2"
+name = "gpui-pre"
+version = "0.3.1"
 dependencies = [
  "accesskit",
  "anyhow",
@@ -7539,7 +7539,8 @@ dependencies = [
  "futures 0.3.32",
  "futures-concurrency",
  "getrandom 0.3.4",
- "gpui_macros",
+ "gpui-pre-macros",
+ "gpui-pre-sum-tree",
  "gpui_platform",
  "gpui_shared_string",
  "gpui_util",
@@ -7577,7 +7578,6 @@ dependencies = [
  "spin 0.10.0",
  "stacksafe",
  "strum 0.28.0",
- "sum_tree",
  "taffy",
  "thiserror 2.0.17",
  "tracing",
@@ -7598,6 +7598,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui-pre-macros"
+version = "0.3.1"
+dependencies = [
+ "gpui-pre",
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "gpui-pre-sum-tree"
+version = "0.3.1"
+dependencies = [
+ "ctor",
+ "heapless",
+ "log",
+ "proptest",
+ "rand 0.9.4",
+ "rayon",
+ "tracing",
+ "zlog",
+ "ztracing",
+]
+
+[[package]]
 name = "gpui_android"
 version = "0.1.0"
 dependencies = [
@@ -7605,7 +7631,7 @@ dependencies = [
  "android_logger",
  "anyhow",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_wgpu",
  "jni 0.22.4",
  "libc",
@@ -7630,7 +7656,7 @@ dependencies = [
  "derive_more",
  "etagere",
  "foreign-types 0.5.0",
- "gpui",
+ "gpui-pre",
  "image",
  "log",
  "metal",
@@ -7646,7 +7672,7 @@ dependencies = [
  "async-task",
  "dispatch2",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_wgpu",
  "log",
  "objc",
@@ -7670,7 +7696,7 @@ dependencies = [
  "collections",
  "filedescriptor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "gpui_wgpu",
  "http_client",
@@ -7719,7 +7745,7 @@ dependencies = [
  "dispatch2",
  "foreign-types 0.5.0",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_apple",
  "gpui_util",
  "image",
@@ -7745,22 +7771,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpui_macros"
-version = "0.1.0"
-dependencies = [
- "gpui",
- "heck 0.5.0",
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
-
-[[package]]
 name = "gpui_platform"
 version = "0.1.0"
 dependencies = [
  "console_error_panic_hook",
- "gpui",
+ "gpui-pre",
  "gpui_android",
  "gpui_ios",
  "gpui_linux",
@@ -7783,7 +7798,7 @@ name = "gpui_tokio"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "tokio",
 ]
@@ -7804,7 +7819,7 @@ dependencies = [
  "anyhow",
  "console_error_panic_hook",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_wgpu",
  "http_client",
  "js-sys",
@@ -7830,7 +7845,7 @@ dependencies = [
  "cosmic-text",
  "criterion",
  "etagere",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "itertools 0.14.0",
  "log",
@@ -7858,7 +7873,7 @@ dependencies = [
  "dunce",
  "etagere",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "image",
  "itertools 0.14.0",
@@ -8802,7 +8817,7 @@ dependencies = [
  "editor",
  "file_icons",
  "fs",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "menu",
@@ -8930,7 +8945,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "collections",
- "gpui",
+ "gpui-pre",
  "hdrhistogram",
  "telemetry",
 ]
@@ -8943,7 +8958,7 @@ dependencies = [
  "command_palette_hooks",
  "editor",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "project",
  "serde_json",
@@ -8962,7 +8977,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "client",
- "gpui",
+ "gpui-pre",
  "log",
  "release_channel",
  "smol",
@@ -9283,7 +9298,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "editor",
- "gpui",
+ "gpui-pre",
  "log",
  "settings",
  "shellexpand",
@@ -9334,7 +9349,7 @@ dependencies = [
  "extension",
  "feature_flags",
  "fs",
- "gpui",
+ "gpui-pre",
  "language",
  "parking_lot",
  "paths",
@@ -9463,7 +9478,7 @@ dependencies = [
  "editor",
  "fs",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "json_schema_store",
  "language",
@@ -9571,7 +9586,8 @@ dependencies = [
  "futures-lite 2.6.1",
  "fuzzy_nucleo",
  "globset",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "grammars",
  "http_client",
  "imara-diff",
@@ -9594,7 +9610,6 @@ dependencies = [
  "smallvec",
  "streaming-iterator",
  "strsim",
- "sum_tree",
  "task",
  "text",
  "theme",
@@ -9647,7 +9662,7 @@ name = "language_detection"
 version = "0.1.0"
 dependencies = [
  "betlang",
- "gpui",
+ "gpui-pre",
  "language",
 ]
 
@@ -9660,7 +9675,7 @@ dependencies = [
  "collections",
  "extension",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "lsp",
@@ -9682,7 +9697,7 @@ dependencies = [
  "credentials_provider",
  "env_var",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "http_client",
  "icons",
@@ -9748,7 +9763,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "google_ai",
- "gpui",
+ "gpui-pre",
  "gpui_tokio",
  "http_client",
  "language",
@@ -9789,7 +9804,7 @@ dependencies = [
  "cloud_llm_client",
  "futures 0.3.32",
  "google_ai",
- "gpui",
+ "gpui-pre",
  "http_client",
  "language_model",
  "log",
@@ -9807,7 +9822,7 @@ version = "0.1.0"
 dependencies = [
  "db",
  "editor",
- "gpui",
+ "gpui-pre",
  "project",
  "ui",
  "workspace",
@@ -9821,7 +9836,7 @@ dependencies = [
  "editor",
  "file_icons",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "open_path_prompt",
  "picker",
@@ -9844,7 +9859,7 @@ dependencies = [
  "edit_prediction",
  "editor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "language",
  "lsp",
@@ -9882,7 +9897,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "globset",
- "gpui",
+ "gpui-pre",
  "grammars",
  "http_client",
  "itertools 0.14.0",
@@ -10081,7 +10096,7 @@ name = "line_ending_selector"
 version = "0.1.0"
 dependencies = [
  "editor",
- "gpui",
+ "gpui-pre",
  "language",
  "picker",
  "project",
@@ -10251,7 +10266,7 @@ dependencies = [
  "coreaudio-rs 0.12.1",
  "cpal",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "gpui_tokio",
  "http_client_tls",
@@ -10468,7 +10483,7 @@ dependencies = [
  "ctor",
  "futures 0.3.32",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "log",
  "lsp-types",
@@ -10503,7 +10518,7 @@ dependencies = [
  "editor",
  "file_icons",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "indoc",
  "language",
  "log",
@@ -10648,7 +10663,8 @@ dependencies = [
  "collections",
  "env_logger 0.11.8",
  "fs",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "gpui_platform",
  "html5ever",
  "image",
@@ -10664,7 +10680,6 @@ dependencies = [
  "settings",
  "smallvec",
  "stacksafe",
- "sum_tree",
  "theme",
  "theme_settings",
  "ui",
@@ -10680,7 +10695,7 @@ dependencies = [
  "db",
  "editor",
  "fs",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "markdown",
@@ -10846,7 +10861,7 @@ dependencies = [
 name = "menu"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
 ]
 
 [[package]]
@@ -10876,7 +10891,7 @@ name = "mermaid_render"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
  "mermaid_render",
  "merman",
  "quick-xml 0.41.0",
@@ -11110,7 +11125,7 @@ name = "miniprofiler_ui"
 version = "0.1.0"
 dependencies = [
  "command_palette_hooks",
- "gpui",
+ "gpui-pre",
  "rpc",
  "serde_json",
  "settings",
@@ -11224,7 +11239,8 @@ dependencies = [
  "collections",
  "ctor",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "indoc",
  "itertools 0.14.0",
  "language",
@@ -11238,7 +11254,6 @@ dependencies = [
  "serde",
  "settings",
  "smallvec",
- "sum_tree",
  "text",
  "theme",
  "tracing",
@@ -11458,9 +11473,9 @@ dependencies = [
  "client",
  "component",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "rpc",
- "sum_tree",
  "time",
  "ui",
  "util",
@@ -12188,7 +12203,7 @@ dependencies = [
  "documented",
  "fs",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "menu",
  "notifications",
  "picker",
@@ -12298,7 +12313,7 @@ dependencies = [
  "file_icons",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "picker",
  "project",
  "serde",
@@ -12335,7 +12350,7 @@ dependencies = [
  "base64 0.22.1",
  "credentials_provider",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "language_model",
  "log",
@@ -12497,7 +12512,7 @@ dependencies = [
  "editor",
  "futures 0.3.32",
  "fuzzy_nucleo",
- "gpui",
+ "gpui-pre",
  "indoc",
  "language",
  "lsp",
@@ -12527,7 +12542,7 @@ dependencies = [
  "file_icons",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "language",
  "log",
@@ -12604,7 +12619,7 @@ dependencies = [
 name = "panel"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "ui",
  "workspace",
 ]
@@ -13440,7 +13455,7 @@ dependencies = [
  "anyhow",
  "db",
  "editor",
- "gpui",
+ "gpui-pre",
  "language",
  "menu",
  "project",
@@ -13462,7 +13477,7 @@ name = "picker_preview"
 version = "0.1.0"
 dependencies = [
  "editor",
- "gpui",
+ "gpui-pre",
  "language",
  "multi_buffer",
  "picker",
@@ -13569,7 +13584,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 name = "platform_title_bar"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "project",
  "settings",
  "smallvec",
@@ -13801,7 +13816,7 @@ dependencies = [
  "anyhow",
  "collections",
  "fs",
- "gpui",
+ "gpui-pre",
  "language",
  "log",
  "lsp",
@@ -13969,7 +13984,8 @@ dependencies = [
  "git",
  "git_hosting_providers",
  "globset",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "http_client",
  "image",
  "indexmap 2.14.0",
@@ -14003,7 +14019,6 @@ dependencies = [
  "smol",
  "snippet",
  "snippet_provider",
- "sum_tree",
  "task",
  "tempfile",
  "terminal",
@@ -14032,7 +14047,7 @@ dependencies = [
  "clap",
  "client",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "http_client",
  "language",
@@ -14061,7 +14076,7 @@ dependencies = [
  "git",
  "git_ui",
  "git_ui_core",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "language",
  "log",
@@ -14096,7 +14111,7 @@ dependencies = [
  "editor",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "lsp",
  "ordered-float 5.5.0",
@@ -14140,7 +14155,7 @@ dependencies = [
  "db",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "handlebars 4.5.0",
  "heed",
  "language",
@@ -14883,7 +14898,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "fuzzy_nucleo",
- "gpui",
+ "gpui-pre",
  "http_client",
  "indoc",
  "language",
@@ -15038,7 +15053,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 name = "release_channel"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "semver",
 ]
 
@@ -15053,7 +15068,7 @@ dependencies = [
  "collections",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "log",
  "parking_lot",
  "paths",
@@ -15083,7 +15098,7 @@ dependencies = [
  "auto_update",
  "editor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "log",
  "markdown",
  "menu",
@@ -15125,7 +15140,7 @@ dependencies = [
  "futures 0.3.32",
  "git",
  "git_hosting_providers",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "gpui_tokio",
  "http_client",
@@ -15204,7 +15219,7 @@ dependencies = [
  "feature_flags",
  "file_icons",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "html_to_markdown",
  "http_client",
  "image",
@@ -15462,12 +15477,12 @@ version = "0.1.0"
 dependencies = [
  "criterion",
  "ctor",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "heapless",
  "log",
  "rand 0.9.4",
  "rayon",
- "sum_tree",
  "tracing",
  "unicode-segmentation",
  "util",
@@ -15522,7 +15537,7 @@ dependencies = [
  "base64 0.22.1",
  "collections",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "parking_lot",
  "proto",
  "rand 0.9.4",
@@ -15897,7 +15912,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_proxy",
  "libc",
  "log",
@@ -16177,7 +16192,7 @@ dependencies = [
  "file_icons",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "language",
  "log",
@@ -16519,7 +16534,7 @@ name = "session"
 version = "0.1.0"
 dependencies = [
  "db",
- "gpui",
+ "gpui-pre",
  "serde_json",
  "util",
  "uuid",
@@ -16534,7 +16549,7 @@ dependencies = [
  "ec4rs",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "indoc",
  "inventory",
  "log",
@@ -16562,7 +16577,7 @@ dependencies = [
  "anyhow",
  "collections",
  "derive_more",
- "gpui",
+ "gpui-pre",
  "language_model_core",
  "log",
  "schemars 1.0.4",
@@ -16607,7 +16622,7 @@ version = "0.1.0"
 dependencies = [
  "editor",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "menu",
  "picker",
  "project",
@@ -16647,7 +16662,7 @@ dependencies = [
  "fs",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "heck 0.5.0",
  "http_client",
  "http_proxy",
@@ -16804,7 +16819,7 @@ dependencies = [
  "fs",
  "git",
  "git_ui_core",
- "gpui",
+ "gpui-pre",
  "http_client",
  "itertools 0.14.0",
  "language",
@@ -17076,7 +17091,7 @@ dependencies = [
  "extension",
  "fs",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "indoc",
  "parking_lot",
  "paths",
@@ -17094,7 +17109,7 @@ version = "0.1.0"
 dependencies = [
  "file_icons",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "open_path_prompt",
  "paths",
@@ -17587,21 +17602,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13c2bddecc57b384dee18652358fb23172facb8a2c51ccc10d74c157bdea3292"
 
 [[package]]
-name = "sum_tree"
-version = "0.1.0"
-dependencies = [
- "ctor",
- "heapless",
- "log",
- "proptest",
- "rand 0.9.4",
- "rayon",
- "tracing",
- "zlog",
- "ztracing",
-]
-
-[[package]]
 name = "sval"
 version = "2.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -17690,7 +17690,7 @@ name = "svg_preview"
 version = "0.1.0"
 dependencies = [
  "file_icons",
- "gpui",
+ "gpui-pre",
  "language",
  "multi_buffer",
  "ui",
@@ -17938,7 +17938,7 @@ dependencies = [
 name = "syntax_theme"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "serde",
  "serde_json",
 ]
@@ -18041,7 +18041,7 @@ name = "system_specs"
 version = "0.1.0"
 dependencies = [
  "anyhow",
- "gpui",
+ "gpui-pre",
  "human_bytes",
  "pciid-parser",
  "release_channel",
@@ -18058,7 +18058,7 @@ dependencies = [
  "ctor",
  "editor",
  "fuzzy_nucleo",
- "gpui",
+ "gpui-pre",
  "menu",
  "picker",
  "project",
@@ -18081,7 +18081,7 @@ dependencies = [
  "anyhow",
  "editor",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "log",
  "picker",
  "project",
@@ -18148,7 +18148,7 @@ dependencies = [
  "anyhow",
  "collections",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "hex",
  "log",
  "parking_lot",
@@ -18173,7 +18173,7 @@ dependencies = [
  "editor",
  "file_icons",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "language",
  "menu",
@@ -18261,7 +18261,7 @@ dependencies = [
  "collections",
  "futures 0.3.32",
  "futures-lite 2.6.1",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "libc",
  "log",
@@ -18308,7 +18308,7 @@ dependencies = [
  "dirs",
  "editor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "itertools 0.14.0",
  "language",
  "log",
@@ -18344,7 +18344,8 @@ dependencies = [
  "clock",
  "collections",
  "ctor",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "log",
  "parking_lot",
  "postage",
@@ -18352,7 +18353,6 @@ dependencies = [
  "regex",
  "rope",
  "smallvec",
- "sum_tree",
  "util",
  "zlog",
 ]
@@ -18363,7 +18363,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "collections",
- "gpui",
+ "gpui-pre",
  "palette",
  "parking_lot",
  "refineable",
@@ -18384,7 +18384,7 @@ dependencies = [
  "anyhow",
  "extension",
  "fs",
- "gpui",
+ "gpui-pre",
  "theme",
  "theme_settings",
 ]
@@ -18396,7 +18396,7 @@ dependencies = [
  "anyhow",
  "clap",
  "collections",
- "gpui",
+ "gpui-pre",
  "indexmap 2.14.0",
  "log",
  "palette",
@@ -18417,7 +18417,7 @@ dependencies = [
  "editor",
  "fs",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "log",
  "picker",
  "project",
@@ -18438,7 +18438,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "collections",
- "gpui",
+ "gpui-pre",
  "gpui_util",
  "log",
  "palette",
@@ -18659,7 +18659,7 @@ dependencies = [
  "db",
  "fs",
  "git_ui_core",
- "gpui",
+ "gpui-pre",
  "icons",
  "livekit_client",
  "platform_title_bar",
@@ -18937,7 +18937,7 @@ dependencies = [
  "editor",
  "futures 0.3.32",
  "fuzzy",
- "gpui",
+ "gpui-pre",
  "language",
  "menu",
  "open_path_prompt",
@@ -19519,8 +19519,8 @@ dependencies = [
  "chrono",
  "component",
  "documented",
- "gpui",
- "gpui_macros",
+ "gpui-pre",
+ "gpui-pre-macros",
  "gpui_util",
  "icons",
  "itertools 0.14.0",
@@ -19543,7 +19543,7 @@ name = "ui_input"
 version = "0.1.0"
 dependencies = [
  "component",
- "gpui",
+ "gpui-pre",
  "ui",
 ]
 
@@ -19561,7 +19561,7 @@ dependencies = [
 name = "ui_prompt"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "markdown",
  "menu",
  "settings",
@@ -19939,7 +19939,7 @@ dependencies = [
  "futures 0.3.32",
  "fuzzy",
  "git_ui",
- "gpui",
+ "gpui-pre",
  "indoc",
  "itertools 0.14.0",
  "language",
@@ -19981,7 +19981,7 @@ dependencies = [
 name = "vim_mode_setting"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "settings",
 ]
 
@@ -20640,7 +20640,7 @@ version = "0.1.0"
 dependencies = [
  "ctor",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "parking_lot",
  "zlog",
 ]
@@ -20799,7 +20799,7 @@ dependencies = [
  "anyhow",
  "cloud_llm_client",
  "collections",
- "gpui",
+ "gpui-pre",
 ]
 
 [[package]]
@@ -20812,7 +20812,7 @@ dependencies = [
  "cloud_api_types",
  "cloud_llm_client",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "http_client",
  "language_model",
  "serde_json",
@@ -21073,7 +21073,7 @@ version = "0.1.0"
 dependencies = [
  "collections",
  "command_palette",
- "gpui",
+ "gpui-pre",
  "settings",
  "theme",
  "theme_settings",
@@ -22325,7 +22325,7 @@ dependencies = [
  "futures 0.3.32",
  "futures-lite 2.6.1",
  "git",
- "gpui",
+ "gpui-pre",
  "http_client",
  "itertools 0.14.0",
  "language",
@@ -22377,7 +22377,8 @@ dependencies = [
  "futures-lite 2.6.1",
  "fuzzy",
  "git",
- "gpui",
+ "gpui-pre",
+ "gpui-pre-sum-tree",
  "ignore",
  "language",
  "log",
@@ -22390,7 +22391,6 @@ dependencies = [
  "serde_json",
  "settings",
  "smallvec",
- "sum_tree",
  "text",
  "tracing",
  "util",
@@ -22867,7 +22867,7 @@ dependencies = [
  "git_ui",
  "git_ui_core",
  "go_to_line",
- "gpui",
+ "gpui-pre",
  "gpui_platform",
  "gpui_tokio",
  "http_client",
@@ -23090,7 +23090,7 @@ dependencies = [
 name = "zed_actions"
 version = "0.1.0"
 dependencies = [
- "gpui",
+ "gpui-pre",
  "schemars 1.0.4",
  "serde",
  "util",
@@ -23103,7 +23103,7 @@ dependencies = [
  "anyhow",
  "credentials_provider",
  "futures 0.3.32",
- "gpui",
+ "gpui-pre",
  "paths",
  "release_channel",
  "serde_json",
@@ -23348,7 +23348,7 @@ name = "zlog_settings"
 version = "0.1.0"
 dependencies = [
  "collections",
- "gpui",
+ "gpui-pre",
  "settings",
  "zlog",
 ]
