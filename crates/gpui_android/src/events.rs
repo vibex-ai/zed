@@ -290,6 +290,11 @@ pub(crate) fn handle_input_event(
                         if window.state.borrow().input_handler.is_some() {
                             window.show_soft_keyboard();
                         }
+                        // The tap may have moved the caret, and the IME mirror
+                        // computes the range of every committed edit from its
+                        // own selection, so it has to be told before the IME
+                        // commits the next character.
+                        window.synchronize_soft_keyboard();
                     }
                     TouchGesture::Scrolling {
                         last,

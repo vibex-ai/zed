@@ -90,6 +90,10 @@ pub(crate) struct AndroidWindowInner {
     pub(crate) surface_configured: Cell<bool>,
     pub(crate) appearance: Cell<WindowAppearance>,
     soft_keyboard_requested: Cell<bool>,
+    /// The selection last handed to the Java-side IME mirror. The mirror
+    /// computes the range of every committed edit from its own selection,
+    /// so it has to be told when the GPUI cursor moves.
+    last_ime_selection: RefCell<Option<Range<usize>>>,
     pending_physical_size: Cell<Option<Size<DevicePixels>>>,
 }
 
@@ -166,6 +170,7 @@ impl AndroidWindow {
             surface_configured: Cell::new(true),
             appearance: Cell::new(appearance),
             soft_keyboard_requested: Cell::new(false),
+            last_ime_selection: RefCell::new(None),
             pending_physical_size: Cell::new(None),
         });
 
@@ -339,6 +344,7 @@ impl AndroidWindowInner {
     pub(crate) fn show_soft_keyboard(&self) {
         if !self.soft_keyboard_requested.replace(true) {
             let (text, selection) = self.input_snapshot().unwrap_or_default();
+            self.last_ime_selection.replace(Some(selection.clone()));
             if crate::ime::update_java_editor(&self.app, &text, selection, true) {
                 return;
             }
@@ -348,6 +354,8 @@ impl AndroidWindowInner {
 
     pub(crate) fn hide_soft_keyboard(&self) {
         if self.soft_keyboard_requested.replace(false) {
+            // The mirror is gone, so the next keyboard session starts fresh.
+            self.last_ime_selection.replace(None);
             if !crate::ime::hide_java_editor(&self.app) {
                 self.app.hide_soft_input(false);
             }
@@ -358,22 +366,51 @@ impl AndroidWindowInner {
         self.soft_keyboard_requested.set(false);
     }
 
+    /// The focused input's full text and its selection, in UTF-16 units.
+    ///
+    /// The length is deliberately not taken from `text_length_utf16`: that is a
+    /// defaulted [`gpui::InputHandler`] method which returns `None` unless the
+    /// input overrides it, and gpui-component's inputs do not, so asking for the
+    /// length made this a silent no-op and left the IME mirror on a stale
+    /// selection. An over-long range is safe instead — handlers clamp it and
+    /// report the range they actually served through `actual_range`.
     fn input_snapshot(&self) -> Option<(String, Range<usize>)> {
         self.with_input_handler(|handler| {
-            let length = handler.text_length_utf16()?;
             let selection = handler.selected_text_range(false)?.range;
             let mut actual_range = None;
-            let text = handler.text_for_range(0..length, &mut actual_range)?;
+            let text = handler.text_for_range(0..usize::MAX, &mut actual_range)?;
             Some((text, selection))
         })
         .flatten()
     }
 
-    fn synchronize_soft_keyboard(&self) {
-        if !self.soft_keyboard_requested.get() {
+    /// Push the current text and selection to the Java-side IME mirror.
+    ///
+    /// Called from the tap handler and from `set_input_handler`. The selection
+    /// is checked first: reading the whole document and crossing into Java is
+    /// only worth it when the mirror would see a change. Gating this on
+    /// `soft_keyboard_requested` was wrong, since that flag tracks whether the
+    /// keyboard was *asked for* and is cleared by inset changes while the IME
+    /// is still up.
+    ///
+    /// GPUI only reports focus transitions through `text_input_state_changed`,
+    /// so a cursor move would otherwise never reach the mirror. The mirror
+    /// computes the range of each committed edit from its own selection, which
+    /// is why text used to land at the position the mirror last saw rather than
+    /// where the user had tapped.
+    pub(crate) fn synchronize_soft_keyboard(&self) {
+        let Some(selection) = self
+            .with_input_handler(|handler| handler.selected_text_range(false))
+            .flatten()
+            .map(|selection| selection.range)
+        else {
+            return;
+        };
+        if self.last_ime_selection.borrow().as_ref() == Some(&selection) {
             return;
         }
-        if let Some((text, selection)) = self.input_snapshot() {
+        self.last_ime_selection.replace(Some(selection.clone()));
+        if let Some((text, _)) = self.input_snapshot() {
             crate::ime::update_java_editor(&self.app, &text, selection, false);
         }
     }
@@ -540,6 +577,10 @@ impl PlatformWindow for AndroidWindow {
         // the handler every frame, so requesting it here re-opens a keyboard
         // the user just dismissed. Taps summon it instead (events.rs).
         self.inner.state.borrow_mut().input_handler = Some(input_handler);
+        // Registering the handler is the only per-frame hook the platform gets,
+        // and the IME mirror has to follow the cursor. Only a changed selection
+        // crosses into Java.
+        self.inner.synchronize_soft_keyboard();
     }
 
     fn take_input_handler(&mut self) -> Option<PlatformInputHandler> {
