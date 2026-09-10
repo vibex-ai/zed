@@ -220,6 +220,11 @@ pub(crate) fn tick_long_press(window: &AndroidWindowInner, gesture: &mut TouchGe
     }
     let position = start.position;
     let modifiers = Modifiers::default();
+    // The menu a long press opens takes focus from the input, and the keyboard
+    // has to survive that: Android keeps the IME up behind its own selection
+    // toolbar, and a keyboard that collapses here reflows the layout the menu
+    // was positioned against.
+    window.hold_soft_keyboard();
     // Android selects the word under the finger on a long press, and the inputs
     // read a left double click as exactly that. Without this the menu opens with
     // an empty selection, which leaves every item that acts on a selection
@@ -276,6 +281,9 @@ pub(crate) fn handle_input_event(
 
             match motion_event.action() {
                 MotionAction::Down => {
+                    // A new press means the user is driving the UI again, so a
+                    // hold armed by an earlier long press has outlived its menu.
+                    window.release_soft_keyboard();
                     let mut velocity = VelocityTracker::default();
                     velocity.push(sample);
                     *gesture = TouchGesture::Pending {

@@ -14,6 +14,13 @@ use std::cell::{Cell, RefCell};
 use std::ops::Range;
 use std::rc::Rc;
 use std::sync::Arc;
+use std::time::{Duration, Instant};
+
+/// How long after a long press the focus change it causes is still expected.
+///
+/// The menu takes focus in the deferred effect of the same frame, so this only
+/// has to cover a slow frame or two.
+const CONTEXT_MENU_KEYBOARD_HOLD: Duration = Duration::from_millis(500);
 
 /// Wraps the current `ANativeWindow` so `WgpuRenderer` can create a surface
 /// from it via raw-window-handle.
@@ -90,6 +97,9 @@ pub(crate) struct AndroidWindowInner {
     pub(crate) surface_configured: Cell<bool>,
     pub(crate) appearance: Cell<WindowAppearance>,
     soft_keyboard_requested: Cell<bool>,
+    /// When the keyboard was last held across a focus change, if the hold is
+    /// still live. See [`AndroidWindowInner::hold_soft_keyboard`].
+    soft_keyboard_held_at: Cell<Option<Instant>>,
     /// The selection last handed to the Java-side IME mirror. The mirror
     /// computes the range of every committed edit from its own selection,
     /// so it has to be told when the GPUI cursor moves.
@@ -170,6 +180,7 @@ impl AndroidWindow {
             surface_configured: Cell::new(true),
             appearance: Cell::new(appearance),
             soft_keyboard_requested: Cell::new(false),
+            soft_keyboard_held_at: Cell::new(None),
             last_ime_selection: RefCell::new(None),
             pending_physical_size: Cell::new(None),
         });
@@ -353,13 +364,49 @@ impl AndroidWindowInner {
     }
 
     pub(crate) fn hide_soft_keyboard(&self) {
-        if self.soft_keyboard_requested.replace(false) {
-            // The mirror is gone, so the next keyboard session starts fresh.
-            self.last_ime_selection.replace(None);
-            if !crate::ime::hide_java_editor(&self.app) {
-                self.app.hide_soft_input(false);
-            }
+        if !self.soft_keyboard_requested.get() {
+            return;
         }
+        // Android shows its selection toolbar without moving focus off the
+        // editor, so the keyboard stays up behind it. GPUI's context menu is a
+        // popup that does take focus, and the input losing focus reads as the
+        // user leaving it. Hiding the keyboard there is doubly wrong: it
+        // collapses a keyboard the user is still using, and the layout it
+        // reflows out from under the menu was what the menu was positioned
+        // against, leaving it floating away from the selection it belongs to.
+        // A long press is the only gesture that opens such a menu, so the hold
+        // is armed there and consumed by the focus loss it causes. It is
+        // bounded in time because the menu takes focus on the spot: a hold
+        // that outlived the gesture would swallow the next genuine focus loss
+        // instead, and leave a keyboard up over a view the user had left.
+        if self
+            .soft_keyboard_held_at
+            .take()
+            .is_some_and(|held_at| held_at.elapsed() < CONTEXT_MENU_KEYBOARD_HOLD)
+        {
+            return;
+        }
+        self.soft_keyboard_requested.set(false);
+        // The mirror is gone, so the next keyboard session starts fresh.
+        self.last_ime_selection.replace(None);
+        if !crate::ime::hide_java_editor(&self.app) {
+            self.app.hide_soft_input(false);
+        }
+    }
+
+    /// Keep the soft keyboard up across the next focus change.
+    ///
+    /// Armed by the long-press gesture, which is what opens a context menu.
+    /// Dropping it again is [`AndroidWindowInner::release_soft_keyboard`]'s
+    /// job: the hold only has to survive the one focus loss the menu causes,
+    /// and any new finger-down means the user is driving the UI again.
+    pub(crate) fn hold_soft_keyboard(&self) {
+        self.soft_keyboard_held_at.set(Some(Instant::now()));
+    }
+
+    /// Drop a hold that no menu ended up consuming.
+    pub(crate) fn release_soft_keyboard(&self) {
+        self.soft_keyboard_held_at.set(None);
     }
 
     pub(crate) fn reset_soft_keyboard_request(&self) {
