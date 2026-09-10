@@ -220,6 +220,23 @@ pub(crate) fn tick_long_press(window: &AndroidWindowInner, gesture: &mut TouchGe
     }
     let position = start.position;
     let modifiers = Modifiers::default();
+    // Android selects the word under the finger on a long press, and the inputs
+    // read a left double click as exactly that. Without this the menu opens with
+    // an empty selection, which leaves every item that acts on a selection
+    // disabled and makes the menu useless.
+    window.dispatch_input(PlatformInput::MouseDown(MouseDownEvent {
+        button: MouseButton::Left,
+        position,
+        modifiers,
+        click_count: 2,
+        first_mouse: false,
+    }));
+    window.dispatch_input(PlatformInput::MouseUp(MouseUpEvent {
+        button: MouseButton::Left,
+        position,
+        modifiers,
+        click_count: 2,
+    }));
     window.dispatch_input(PlatformInput::MouseDown(MouseDownEvent {
         button: MouseButton::Right,
         position,
