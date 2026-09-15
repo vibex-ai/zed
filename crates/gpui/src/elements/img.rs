@@ -573,6 +573,42 @@ impl ImageSource {
         }
     }
 
+    /// Removes every frame of this source from the window's sprite atlas.
+    ///
+    /// Returns how many atlas tiles were released: the frames of the decoded
+    /// image the source resolved to. A source with no stable identity
+    /// (`Custom`) releases nothing and returns 0, as does a `Resource` or
+    /// `Image` whose decoded data is not currently resident.
+    ///
+    /// Release is explicit rather than tied to an element's lifetime: an
+    /// `Arc<RenderImage>` handed to [`ImageSource::Render`] may still be held
+    /// after the element is gone, so taking its tiles away automatically would
+    /// re-upload an image that is still in use. Calling this twice is
+    /// harmless; the second call removes tiles that are already gone.
+    pub fn evict(&self, window: &mut Window, cx: &mut App) -> usize {
+        let data = match self {
+            ImageSource::Render(data) => Some(Ok(data.clone())),
+            ImageSource::Image(data) => window.get_asset::<AssetLogger<ImageDecoder>>(data, cx),
+            ImageSource::Resource(resource) => window
+                .image_cache_stack
+                .last()
+                .cloned()
+                .and_then(|cache| cache.load(resource, window, cx)),
+            ImageSource::Custom(_) => None,
+        };
+
+        let Some(Ok(data)) = data else {
+            return 0;
+        };
+        let released = data.frame_count();
+        if released == 0 {
+            return 0;
+        }
+
+        window.drop_image(data).log_err();
+        released
+    }
+
     /// Remove this image source from the asset system
     pub fn remove_asset(&self, cx: &mut App) {
         match self {
@@ -819,6 +855,15 @@ mod tests {
         Arc::new(RenderImage::new(SmallVec::from_elem(frame, 1)))
     }
 
+    fn test_encoded_png() -> Vec<u8> {
+        let buffer = ImageBuffer::from_pixel(4, 4, Rgba([0u8, 0, 0, 0]));
+        let mut bytes = Vec::new();
+        image::DynamicImage::ImageRgba8(buffer)
+            .write_to(&mut Cursor::new(&mut bytes), image::ImageFormat::Png)
+            .expect("the test image should encode as PNG");
+        bytes
+    }
+
     /// Overwrites the cached `frame_index` of the sibling `img` during paint.
     fn seed_frame_index(frame_index: usize) -> impl IntoElement {
         canvas(
@@ -978,6 +1023,161 @@ mod tests {
             img(ImageSource::Render(test_image(1)))
                 .id(TEST_IMG_ID)
                 .into_any_element()
+        });
+    }
+
+    #[gpui::test]
+    fn image_atlas_evict_releases_tiles(cx: &mut TestAppContext) {
+        let window = cx.add_empty_window();
+        let image = test_image_with_size(4, 4);
+        let source = ImageSource::Render(image.clone());
+
+        window.draw(point(px(0.), px(0.)), size(px(10.), px(10.)), |_, _| {
+            img(source.clone()).size_full().into_any_element()
+        });
+        window.update(|window, _| {
+            assert!(
+                window.has_image_atlas_entry(&image),
+                "painting an image should leave its frame in the atlas"
+            );
+        });
+
+        let released = window.update(|window, cx| source.evict(window, cx));
+        assert_eq!(
+            released,
+            image.frame_count(),
+            "evicting should report every frame it took out of the atlas"
+        );
+        window.update(|window, _| {
+            assert!(
+                !window.has_image_atlas_entry(&image),
+                "evicting a source should remove its frames from the atlas"
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn image_atlas_evict_is_idempotent(cx: &mut TestAppContext) {
+        let window = cx.add_empty_window();
+        let image = test_image_with_size(4, 4);
+        let source = ImageSource::Render(image.clone());
+
+        window.draw(point(px(0.), px(0.)), size(px(10.), px(10.)), |_, _| {
+            img(source.clone()).size_full().into_any_element()
+        });
+        window.update(|window, cx| {
+            assert!(source.evict(window, cx) > 0);
+            source.evict(window, cx);
+            assert!(
+                !window.has_image_atlas_entry(&image),
+                "a repeated eviction should leave the atlas empty"
+            );
+        });
+
+        // The element is still allowed to paint the image again: the atlas
+        // re-uploads it the same way it does on first paint.
+        window.draw(point(px(0.), px(0.)), size(px(10.), px(10.)), |_, _| {
+            img(source).size_full().into_any_element()
+        });
+        window.update(|window, _| {
+            assert!(window.has_image_atlas_entry(&image));
+        });
+    }
+
+    #[gpui::test]
+    fn image_atlas_evict_ignores_custom_sources(cx: &mut TestAppContext) {
+        let window = cx.add_empty_window();
+        let source = ImageSource::Custom(Arc::new(|_, _| None));
+
+        let released = window.update(|window, cx| source.evict(window, cx));
+        assert_eq!(
+            released, 0,
+            "a source without a stable identity has nothing to release"
+        );
+    }
+
+    #[gpui::test]
+    fn image_atlas_evict_releases_decoded_image_sources(cx: &mut TestAppContext) {
+        let image = Arc::new(Image::from_bytes(
+            crate::ImageFormat::Png,
+            test_encoded_png(),
+        ));
+        let source = ImageSource::Image(image.clone());
+
+        // Decode before painting: starting a fresh load from an element asks
+        // the window for the view to notify, and a bare drawn element has none.
+        cx.update(|cx| {
+            // The asset cache keeps its own handle, so this one can be dropped.
+            drop(cx.fetch_asset::<AssetLogger<ImageDecoder>>(&image));
+        });
+        cx.run_until_parked();
+
+        let window = cx.add_empty_window();
+        window.draw(point(px(0.), px(0.)), size(px(10.), px(10.)), |_, _| {
+            img(source.clone()).size_full().into_any_element()
+        });
+
+        let decoded = window
+            .update(|window, cx| {
+                window
+                    .get_asset::<AssetLogger<ImageDecoder>>(&image, cx)
+                    .expect("the image should have decoded by now")
+                    .expect("the test PNG should decode")
+            });
+        window.update(|window, _| {
+            assert!(
+                window.has_image_atlas_entry(&decoded),
+                "painting a decoded image should leave its frame in the atlas"
+            );
+        });
+
+        let released = window.update(|window, cx| source.evict(window, cx));
+        assert_eq!(released, decoded.frame_count());
+        window.update(|window, _| {
+            assert!(
+                !window.has_image_atlas_entry(&decoded),
+                "evicting a decoded source should remove its frames from the atlas"
+            );
+        });
+    }
+
+    #[gpui::test]
+    fn image_atlas_evict_returns_to_baseline_for_every_image(cx: &mut TestAppContext) {
+        let window = cx.add_empty_window();
+        let images = (0..8)
+            .map(|_| test_image_with_size(4, 4))
+            .collect::<Vec<_>>();
+        let sources = images
+            .iter()
+            .cloned()
+            .map(ImageSource::Render)
+            .collect::<Vec<_>>();
+
+        for source in &sources {
+            window.draw(point(px(0.), px(0.)), size(px(10.), px(10.)), |_, _| {
+                img(source.clone()).size_full().into_any_element()
+            });
+        }
+        window.update(|window, _| {
+            for image in &images {
+                assert!(window.has_image_atlas_entry(image));
+            }
+        });
+
+        let released = window.update(|window, cx| {
+            sources
+                .iter()
+                .map(|source| source.evict(window, cx))
+                .sum::<usize>()
+        });
+        assert_eq!(released, images.len());
+        window.update(|window, _| {
+            for image in &images {
+                assert!(
+                    !window.has_image_atlas_entry(image),
+                    "the atlas should be back at its baseline once every source is evicted"
+                );
+            }
         });
     }
 }
