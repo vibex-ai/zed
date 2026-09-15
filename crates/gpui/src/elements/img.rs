@@ -1117,13 +1117,12 @@ mod tests {
             img(source.clone()).size_full().into_any_element()
         });
 
-        let decoded = window
-            .update(|window, cx| {
-                window
-                    .get_asset::<AssetLogger<ImageDecoder>>(&image, cx)
-                    .expect("the image should have decoded by now")
-                    .expect("the test PNG should decode")
-            });
+        let decoded = window.update(|window, cx| {
+            window
+                .get_asset::<AssetLogger<ImageDecoder>>(&image, cx)
+                .expect("the image should have decoded by now")
+                .expect("the test PNG should decode")
+        });
         window.update(|window, _| {
             assert!(
                 window.has_image_atlas_entry(&decoded),
