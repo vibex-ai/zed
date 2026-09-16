@@ -3,8 +3,8 @@
 //! infinitely triggering new frames).
 
 use crate::{
-    BorderStyle, Bounds, ContentMask, Corners, Edges, Hsla, Pixels, Quad, ScaledPixels, Scene,
-    Size, point, rgba, size, transparent_black,
+    BorderStyle, Bounds, ContentMask, Corners, EdgeFadeParams, Edges, Hsla, Pixels, Quad,
+    ScaledPixels, Scene, Size, point, rgba, size, transparent_black,
 };
 use std::{collections::VecDeque, time::Duration};
 
@@ -225,6 +225,9 @@ fn solid_quad(
         border_color: transparent_black(),
         corner_radii: Corners::default(),
         border_widths: Edges::default(),
+        // The profiler-gated overlay predates the per-quad edge fade; a zeroed
+        // band is what the scene's other overlay quads paint with.
+        fade: EdgeFadeParams::default(),
     }
 }
 
